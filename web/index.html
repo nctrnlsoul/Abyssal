@@ -289,19 +289,34 @@ header { animation: bootIn .5s ease-out both; }
 
 /* ---------- waveform ---------- */
 .wave-panel { margin-bottom: var(--s4); }
-.wave-wrap { position: relative; }
-.wave { width: 100%; height: 92px; display: block; }
-.wave rect { fill: var(--accent-ink); transition: fill .18s linear; }
-.wave rect.lit { fill: var(--accent); }
+.wave-wrap { position: relative; background: #04070A; border: 1px solid var(--rule);
+             border-radius: 3px; padding: var(--s2) 0 0; }
+.wave { width: 100%; height: 150px; display: block; }
+.wave .bar { fill: var(--accent-ink); transition: fill .16s linear; }
+.wave .bar.lit { fill: var(--accent); }
+.wave .lowbar { fill: rgba(242,187,79,.34); transition: fill .16s linear; }
+.wave .lowbar.lit { fill: var(--state-warn); }
+.wave .axis { stroke: var(--rule); stroke-width: .6; }
+.wave .tick { fill: var(--text-muted); font-family: var(--mono); font-size: 6px; }
+.wave .lane { fill: var(--text-muted); font-family: var(--mono); font-size: 6px;
+              letter-spacing: .04em; }
+.wave .mark { stroke: var(--accent); stroke-width: .7; stroke-dasharray: 2 2; }
+.wave .marktext { fill: var(--accent); font-family: var(--mono); font-size: 5.6px; }
 .playhead {
   position: absolute; top: 0; bottom: 0; width: 2px; background: var(--accent);
-  box-shadow: 0 0 14px rgba(56,214,224,.75); opacity: 0; left: 0;
+  box-shadow: 0 0 16px rgba(56,214,224,.85); opacity: 0; left: 0;
   will-change: transform;
 }
 .playhead.on { opacity: 1; }
+.playhead-time {
+  position: absolute; top: 2px; left: 4px; font-family: var(--mono);
+  font-size: .62rem; color: var(--field); background: var(--accent);
+  padding: 0 4px; border-radius: 2px; white-space: nowrap;
+}
 .wave-meta { display: flex; justify-content: space-between; gap: var(--s3);
-             font-family: var(--mono); font-size: .66rem; color: var(--text-muted);
+             font-family: var(--mono); font-size: .64rem; color: var(--text-muted);
              margin-top: var(--s2); flex-wrap: wrap; }
+.wave-note { font-size: .68rem; color: var(--text-muted); margin: var(--s2) 0 0; }
 
 /* ---------- sonar ping on the generated map ---------- */
 @keyframes ping {
@@ -427,14 +442,15 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
       <section class="panel wave-panel" aria-labelledby="wv-h">
         <h2 id="wv-h">Hydrophone, 60 s window</h2>
         <div class="wave-wrap">
-          <svg class="wave" id="wave" viewBox="0 0 320 92" preserveAspectRatio="none"
-               role="img" aria-label="Peak amplitude envelope of the analyzed recording"></svg>
-          <div class="playhead" id="playhead"></div>
+          <svg class="wave" id="wave" viewBox="0 0 320 150"
+               role="img" aria-label="Peak amplitude envelope of the analyzed recording, with a separate low frequency band"></svg>
+          <div class="playhead" id="playhead"><span class="playhead-time" id="playhead-time">0.0s</span></div>
         </div>
         <div class="wave-meta">
           <span id="wave-src">SanctSound FK04</span>
           <span id="wave-len"></span>
         </div>
+        <p class="wave-note" id="wave-note"></p>
       </section>
 
       <section class="panel" aria-labelledby="fleet-h">
@@ -596,32 +612,96 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
   }
 
   // ---- waveform. real envelope of the clip the acoustic agent read ----------
-  var waveBars = [], waveSeconds = 0;
+  var waveBars = [], lowBars = [], waveSeconds = 0;
 
   function drawWave(d) {
     var svg = $("wave");
     while (svg.firstChild) { svg.removeChild(svg.firstChild); }
     var peaks = d.peaks || [];
     if (!peaks.length) { return; }
+    var low = d.low_band_self || [];
     waveSeconds = d.seconds || 0;
-    var W = 320, H = 92, n = peaks.length;
-    var bw = W / n;
+
     var NS = "http://www.w3.org/2000/svg";
+    var W = 320;
+    var TOP_MID = 52, TOP_H = 44;    // full band, mirrored about TOP_MID
+    var AXIS_Y = 104;
+    var LOW_BASE = 138, LOW_H = 26;  // low band, its own lane
+    var n = peaks.length, bw = W / n;
+
+    function el(tag, attrs, cls) {
+      var e = document.createElementNS(NS, tag);
+      Object.keys(attrs).forEach(function (k) { e.setAttribute(k, attrs[k]); });
+      if (cls) { e.setAttribute("class", cls); }
+      svg.appendChild(e);
+      return e;
+    }
+
+    function label(x, y, txt, cls, anchor) {
+      var t = el("text", { x: x, y: y }, cls);
+      if (anchor) { t.setAttribute("text-anchor", anchor); }
+      t.textContent = txt;
+      return t;
+    }
+
+    label(4, 12, "FULL BAND", "lane");
+    label(316, 12, "peak " + (d.peak_at_seconds || 0).toFixed(1) + "s", "lane", "end");
+
+    // Mirrored about the center line, which is how every audio tool draws this
+    // and reads as a waveform rather than as a bar chart.
     waveBars = peaks.map(function (p, i) {
-      // Floor of 1.5 units so a quiet bucket still reads as a bucket rather
-      // than as a gap in the recording.
-      var h = Math.max(1.5, p * (H - 8));
-      var r = document.createElementNS(NS, "rect");
-      r.setAttribute("x", (i * bw + bw * 0.18).toFixed(2));
-      r.setAttribute("y", ((H - h) / 2).toFixed(2));
-      r.setAttribute("width", (bw * 0.64).toFixed(2));
-      r.setAttribute("height", h.toFixed(2));
-      svg.appendChild(r);
-      return r;
+      var h = Math.max(0.8, p * (TOP_H / 2));
+      return el("rect", {
+        x: (i * bw + bw * 0.15).toFixed(2),
+        y: (TOP_MID - h).toFixed(2),
+        width: (bw * 0.7).toFixed(2),
+        height: (h * 2).toFixed(2)
+      }, "bar");
     });
+
+    // Peak marker. Computed in core/waveform.py, not placed by eye.
+    if (typeof d.peak_bucket === "number") {
+      var px = (d.peak_bucket + 0.5) * bw;
+      el("line", { x1: px.toFixed(1), y1: 16,
+                   x2: px.toFixed(1), y2: (TOP_MID + TOP_H / 2 + 4).toFixed(1) }, "mark");
+    }
+
+    // Time axis, so the trace is anchored to real seconds.
+    el("line", { x1: 0, y1: AXIS_Y, x2: W, y2: AXIS_Y }, "axis");
+    for (var sec = 0; sec <= waveSeconds; sec += 15) {
+      var x = (sec / waveSeconds) * W;
+      el("line", { x1: x.toFixed(1), y1: AXIS_Y - 3, x2: x.toFixed(1), y2: AXIS_Y + 3 }, "axis");
+      label(Math.min(W - 4, Math.max(2, x)), AXIS_Y + 11, sec + "s", "tick",
+            sec === 0 ? "start" : (sec >= waveSeconds ? "end" : "middle"));
+    }
+
+    // Low band, own lane, own scale, and it says so on the chart.
+    label(4, LOW_BASE - LOW_H - 5,
+          "LOW BAND UNDER " + (d.low_band_corner_hz || 500) + " HZ, SCALED INDEPENDENTLY",
+          "lane");
+    lowBars = low.map(function (p, i) {
+      var h = Math.max(0.6, p * LOW_H);
+      return el("rect", {
+        x: (i * bw + bw * 0.15).toFixed(2),
+        y: (LOW_BASE - h).toFixed(2),
+        width: (bw * 0.7).toFixed(2),
+        height: h.toFixed(2)
+      }, "lowbar");
+    });
+
     text($("wave-len"), waveSeconds.toFixed(0) + " s at " +
          ((d.rate || 0) / 1000).toFixed(0) + " kHz, " + n + " buckets");
     text($("wave-src"), d.source || "hydrophone");
+
+    var share = d.low_band_share_of_peak;
+    text($("wave-note"),
+      "Top trace is the full band peak envelope. The lower lane is the same "
+      + "audio low pass filtered near " + (d.low_band_corner_hz || 500)
+      + " Hz, where a vessel engine sits and snapping shrimp do not. It is drawn "
+      + "to its own scale because it only reaches "
+      + (share != null ? (share * 100).toFixed(1) + "%" : "a small fraction")
+      + " of the full band peak on this clip, so do not compare heights between "
+      + "lanes.");
   }
 
   var sweepDone = null;
@@ -629,6 +709,8 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
   function finishSweep() {
     // Terminal state, reachable without a single animation frame.
     waveBars.forEach(function (b) { b.classList.add("lit"); });
+    lowBars.forEach(function (b) { b.classList.add("lit"); });
+    text($("playhead-time"), waveSeconds.toFixed(1) + "s");
     $("playhead").classList.remove("on");
     $("playhead").style.transform = "";
     sweepDone = null;
@@ -638,6 +720,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     var head = $("playhead"), wrap = head.parentNode;
     if (!waveBars.length) { return; }
     waveBars.forEach(function (b) { b.classList.remove("lit"); });
+    lowBars.forEach(function (b) { b.classList.remove("lit"); });
 
     if (REDUCED) { finishSweep(); return; }
 
@@ -648,9 +731,11 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     function step(now) {
       var f = Math.min(1, (now - t0) / ms);
       head.style.transform = "translateX(" + (f * width).toFixed(1) + "px)";
+      text($("playhead-time"), (f * waveSeconds).toFixed(1) + "s");
       var upto = Math.floor(f * waveBars.length);
       for (var i = 0; i < upto; i++) {
         if (!waveBars[i].classList.contains("lit")) { waveBars[i].classList.add("lit"); }
+        if (lowBars[i] && !lowBars[i].classList.contains("lit")) { lowBars[i].classList.add("lit"); }
       }
       if (f < 1) { requestAnimationFrame(step); }
       else { finishSweep(); }

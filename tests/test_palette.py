@@ -255,3 +255,34 @@ def test_health_endpoint_avoids_the_path_cloud_run_intercepts():
     src = _effective("web/app.py")
     assert '@app.get("/health")' in src
     assert '@app.get("/healthz")' not in src, "GFE swallows /healthz on Cloud Run"
+
+
+def test_low_band_is_returned_at_both_scales_with_the_ratio():
+    """Two scalings on purpose. `low_band` keeps the honest relative energy and
+    renders nearly flat, because shrimp dominate this recording by more than an
+    order of magnitude. `low_band_self` shows the shape in its own lane. The
+    ratio is returned so the page can print it rather than let a reader compare
+    bar heights across lanes."""
+    import pathlib
+    from core.waveform import envelope
+    clip = pathlib.Path(__file__).resolve().parents[1] / "data" / "reef_window_a.wav"
+    if not clip.exists():
+        pytest.skip("clip not present")
+    e = envelope(str(clip), buckets=64)
+    assert len(e["low_band"]) == len(e["low_band_self"]) == len(e["peaks"]) == 64
+    assert max(e["low_band_self"]) == 1.0, "self-scaled band must reach 1.0"
+    assert max(e["low_band"]) < 0.5, "shared-scale low band should be small on this clip"
+    assert 0 < e["low_band_share_of_peak"] < 0.5
+    assert e["low_band_corner_hz"] == 500
+
+
+def test_waveform_reports_where_the_peaks_actually_are():
+    import pathlib
+    from core.waveform import envelope
+    clip = pathlib.Path(__file__).resolve().parents[1] / "data" / "reef_window_a.wav"
+    if not clip.exists():
+        pytest.skip("clip not present")
+    e = envelope(str(clip), buckets=64)
+    assert 0 <= e["peak_at_seconds"] <= e["seconds"]
+    assert 0 <= e["low_peak_at_seconds"] <= e["seconds"]
+    assert e["peaks"][e["peak_bucket"]] == 1.0
