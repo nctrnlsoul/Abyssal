@@ -23,7 +23,13 @@
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: #1A2430 #04070A; }
+/* WebKit scrollbars, themed to the field. The bright native track down the
+   trace console was the one element still wearing the OS theme. */
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: #04070A; }
+::-webkit-scrollbar-thumb { background: #1A2430; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #2a3a4c; }
 html { color-scheme: dark; }
 body {
   margin: 0; background: var(--field); color: var(--text);
@@ -118,7 +124,7 @@ blockquote { margin: 0; font-family: var(--mono); font-size: .82rem;
    at desktop widths the old two-column left a void under the ruler. */
 @media (min-width: 1360px) {
   .wrap { max-width: 1560px; }
-  .cols { grid-template-columns: 290px minmax(0, 1.15fr) minmax(0, 0.9fr); }
+  .cols { grid-template-columns: 280px minmax(0, 1.1fr) minmax(0, 0.95fr); }
   .col-c { grid-column: auto; }
   .panes { grid-template-columns: 1fr; }
 }
@@ -380,20 +386,20 @@ header { animation: bootIn .5s ease-out both; }
 .cols { animation: bootIn .5s ease-out .36s both; }
 
 /* ---------- waveform ---------- */
-.wave-panel { margin-bottom: var(--s4); }
+.wave-band { margin-top: var(--s4); }
 .wave-wrap { position: relative; background: #04070A; border: 1px solid var(--rule);
              border-radius: 3px; padding: var(--s2) 0 0; }
-.wave { width: 100%; height: 150px; display: block; }
+.wave { width: 100%; height: 170px; display: block; }
 .wave .bar { fill: var(--accent-ink); transition: fill .16s linear; }
 .wave .bar.lit { fill: var(--accent); }
 .wave .lowbar { fill: rgba(242,187,79,.34); transition: fill .16s linear; }
 .wave .lowbar.lit { fill: var(--state-warn); }
 .wave .axis { stroke: var(--rule); stroke-width: .6; }
-.wave .tick { fill: var(--text-muted); font-family: var(--mono); font-size: 6px; }
-.wave .lane { fill: var(--text-muted); font-family: var(--mono); font-size: 6px;
-              letter-spacing: .04em; }
+.wave .tick { fill: var(--text-muted); font-family: var(--mono); font-size: 10px; }
+.wave .lane { fill: var(--text-muted); font-family: var(--mono); font-size: 10px;
+              letter-spacing: .06em; }
 .wave .mark { stroke: var(--accent); stroke-width: .7; stroke-dasharray: 2 2; }
-.wave .marktext { fill: var(--accent); font-family: var(--mono); font-size: 5.6px; }
+.wave .marktext { fill: var(--accent); font-family: var(--mono); font-size: 9px; }
 .playhead {
   position: absolute; top: 0; bottom: 0; width: 2px; background: var(--accent);
   box-shadow: 0 0 16px rgba(56,214,224,.85); opacity: 0; left: 0;
@@ -575,19 +581,6 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
         </div>
       </section>
 
-      <section class="panel wave-panel" aria-labelledby="wv-h">
-        <h2 id="wv-h">Hydrophone, 60 s window</h2>
-        <div class="wave-wrap">
-          <svg class="wave" id="wave" viewBox="0 0 320 150"
-               role="img" aria-label="Peak amplitude envelope of the analyzed recording, with a separate low frequency band"></svg>
-          <div class="playhead" id="playhead"><span class="playhead-time" id="playhead-time">0.0s</span></div>
-        </div>
-        <div class="wave-meta">
-          <span id="wave-src">SanctSound FK04</span>
-          <span id="wave-len"></span>
-        </div>
-        <p class="wave-note" id="wave-note"></p>
-      </section>
     </div>
 
     <div class="col-b">
@@ -650,6 +643,20 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
       </section>
     </div>
   </div>
+
+  <section class="panel wave-band" aria-labelledby="wv-h">
+        <h2 id="wv-h">Hydrophone, 60 s window</h2>
+        <div class="wave-wrap">
+          <svg class="wave" id="wave" viewBox="0 0 320 150"
+               role="img" aria-label="Peak amplitude envelope of the analyzed recording, with a separate low frequency band"></svg>
+          <div class="playhead" id="playhead"><span class="playhead-time" id="playhead-time">0.0s</span></div>
+        </div>
+        <div class="wave-meta">
+          <span id="wave-src">SanctSound FK04</span>
+          <span id="wave-len"></span>
+        </div>
+        <p class="wave-note" id="wave-note"></p>
+      </section>
 
   <footer>
     <p><strong>This console replays a recorded real run.</strong> A live run makes real
@@ -734,10 +741,16 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     waveSeconds = d.seconds || 0;
 
     var NS = "http://www.w3.org/2000/svg";
-    var W = 320;
-    var TOP_MID = 52, TOP_H = 44;    // full band, mirrored about TOP_MID
-    var AXIS_Y = 104;
-    var LOW_BASE = 138, LOW_H = 26;  // low band, its own lane
+    // 1:1 pixel units. The viewBox width is taken from the rendered container,
+    // so nothing stretches and every label renders at its stated size. The old
+    // fixed 320-unit viewBox was fine in a narrow column and would have scaled
+    // 4.7x across the full-width band, stretching all the type with it.
+    var W = Math.max(320, Math.floor(svg.parentNode.getBoundingClientRect().width) - 2);
+    var H = 170;
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    var TOP_MID = 62, TOP_H = 56;    // full band, mirrored about TOP_MID
+    var AXIS_Y = 120;
+    var LOW_BASE = 158, LOW_H = 28;  // low band, its own lane
     var n = peaks.length, bw = W / n;
 
     function el(tag, attrs, cls) {
@@ -756,7 +769,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     }
 
     label(4, 12, "FULL BAND", "lane");
-    label(316, 12, "peak " + (d.peak_at_seconds || 0).toFixed(1) + "s", "lane", "end");
+    label(W - 4, 12, "peak " + (d.peak_at_seconds || 0).toFixed(1) + "s", "lane", "end");
 
     // Mirrored about the center line, which is how every audio tool draws this
     // and reads as a waveform rather than as a bar chart.
@@ -782,7 +795,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     for (var sec = 0; sec <= waveSeconds; sec += 15) {
       var x = (sec / waveSeconds) * W;
       el("line", { x1: x.toFixed(1), y1: AXIS_Y - 3, x2: x.toFixed(1), y2: AXIS_Y + 3 }, "axis");
-      label(Math.min(W - 4, Math.max(2, x)), AXIS_Y + 11, sec + "s", "tick",
+      label(Math.min(W - 6, Math.max(2, x)), AXIS_Y + 13, sec + "s", "tick",
             sec === 0 ? "start" : (sec >= waveSeconds ? "end" : "middle"));
     }
 
@@ -873,6 +886,23 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
   // half-lit waveform on screen until the next replay.
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "visible" && sweepDone) { finishSweep(); }
+  });
+
+  // The band's viewBox is sized from the container, so a resize needs a
+  // redraw or the drawing keeps the old width. Debounced, lit state preserved,
+  // and skipped while a sweep is actually running rather than fighting it.
+  var lastWave = null, resizeT = null;
+  window.addEventListener("resize", function () {
+    if (!lastWave || sweepDone) { return; }
+    if (resizeT) { clearTimeout(resizeT); }
+    resizeT = setTimeout(function () {
+      var wasLit = waveBars.length && waveBars[0].classList.contains("lit");
+      drawWave(lastWave);
+      if (wasLit) {
+        waveBars.forEach(function (b) { b.classList.add("lit"); });
+        lowBars.forEach(function (b) { b.classList.add("lit"); });
+      }
+    }, 200);
   });
 
   // ---- the signature element -----------------------------------------------
@@ -1191,7 +1221,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
   fetch("api/waveform").then(function (r) {
     if (!r.ok) { throw new Error("waveform"); }
     return r.json();
-  }).then(drawWave).catch(function () {
+  }).then(function (d) { lastWave = d; drawWave(d); }).catch(function () {
     // Draw nothing rather than drawing something invented.
     text($("wave-len"), "waveform unavailable");
   });

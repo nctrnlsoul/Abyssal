@@ -145,7 +145,7 @@ All US Government public domain, and reproducible with `scripts/fetch_data.ps1`.
 Gemini 3.5 Flash, Google Agent Development Kit, Google Cloud Run, FastAPI,
 Pydantic, PyMuPDF.
 
-**103 tests plus 22 route assertions.** Zero external requests on the console:
+**107 tests plus 22 route assertions.** Zero external requests on the console:
 no CDN, no webfont, no icon library.
 
 ## Honest limits, stated rather than discovered

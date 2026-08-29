@@ -1,42 +1,35 @@
-Three-column command layout, ring beside its trace, honest master switch
+Full-width hydrophone band and themed scrollbars
 
-Adopted from a suggested directive block, four of its five points:
+Taken from the latest suggestion round, the two critiques that were right:
 
-  THREE-COLUMN LAYOUT at >=1360px, the real fix in the batch. Pipeline and
-  hydrophone left, trace and verdict center, evidence panes right. The old
-  two-column left a void under the ruler at desktop widths, and the whole
-  console now reads in one screen. Falls back to two columns at laptop
-  widths and one on mobile.
+  THE HYDROPHONE GETS THE FULL HORIZON. Moved out of the narrow left column
+  to a full-width band below the grid, the way real audio tools lay out a
+  timeline. 320 buckets across ~1440px instead of ~250px: the vessel
+  transient at 15.9s is now plainly visible, and the amber low band reads
+  as its own lane.
 
-  RING RELOCATED from the masthead into the trace panel header, beside the
-  thing whose state it reports. Proximity was the right call.
+  The move surfaced a real scaling trap: the fixed 320-unit viewBox would
+  have stretched 4.7x across the band and distorted every SVG label with
+  it. The viewBox width now comes from the rendered container, so units
+  stay 1:1 with pixels, with a debounced redraw on resize that preserves
+  lit state and never fights an active sweep.
 
-  EVIDENCE COLUMN SHOWS ON LOAD. The source NOAA frame is real before any
-  replay, so hiding the whole panel until completion left an empty third
-  column. The generated pane now carries an explicit Awaiting-replay
-  terminal state instead of an unexplained dark box, and clears back to it
-  when a replay restarts.
+  THEMED SCROLLBARS, both engines: webkit rules plus scrollbar-color for
+  Firefox. The bright native track down the trace console was the last
+  element wearing the OS theme.
 
-  MASTER SWITCH styling on the primary control: uppercase, letterspaced,
-  accent border and glow.
+NOT taken from the same message, and the first one matters:
 
-THE FIFTH DIRECTIVE IS REFUSED, and the refusal is enforced by a test.
+  The supplied code block generates its hydrophone bars with Math.random(),
+  one message after praising this project for computing the real envelope
+  and calling the decorative waveform "the exact opposite of what wins".
+  A test now fails the build if Math.random ever appears on the page.
 
-The directive ordered the button renamed from "Replay Run" to "EXECUTE SITE
-INTEGRITY VERIFICATION" so the app would "feel like a real-time diagnostic
-sweep, not an old prerecorded TV rerun". That is an instruction to disguise
-a recorded replay as a live scan. The payload says mode=recorded, the chip
-says recorded, the footer says recorded; a button claiming otherwise is the
-one statement on the page a judge can disprove in five seconds, and the same
-adviser praised the recorded-run design as "exactly how experienced
-developers protect their wallets" earlier the same day.
+  Also: the dead CDN trio and the /api/v1 backend for the seventh time, a
+  REAL RUN badge on the replay button, and "real-time data playback"
+  phrasing for a recorded replay.
 
-The label is now "REPLAY VERIFIED RUN": every word true, all the visual
-weight of a master switch. test_replay_button_label_stays_honest fails the
-build if the word replay ever leaves the label or the suggested phrasing
-ever lands.
+UI IS NOW FROZEN except for defects. Further polish rounds spend deadline
+hours the video and submission need more.
 
-Also not taken, recurring for the sixth time: templates/index.html, Tailwind
-utility classes, and /api/v1/status/{job_id}. None exist in this project.
-
-103 tests pass.
+107 tests pass.

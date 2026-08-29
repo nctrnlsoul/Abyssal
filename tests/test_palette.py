@@ -370,3 +370,44 @@ def test_generated_pane_has_a_terminal_empty_state():
     t = HTML.read_text(encoding="utf-8")
     assert "pane-empty" in t
     assert "Awaiting replay" in t
+
+
+def test_hydrophone_band_is_full_width_below_the_columns():
+    """320 real buckets deserve the full horizon, like an actual audio tool.
+    The band must sit outside the column grid, after it."""
+    if not HTML.exists():
+        pytest.skip("console not built yet")
+    t = HTML.read_text(encoding="utf-8")
+    assert 'class="panel wave-band"' in t
+    assert t.index('class="col-c"') < t.index('class="panel wave-band"')
+    assert t.index('class="panel wave-band"') < t.index("<footer>")
+
+
+def test_waveform_viewbox_is_sized_from_the_container():
+    """A fixed 320-unit viewBox stretched 4.7x across the full-width band and
+    every SVG label with it. The viewBox width must come from the rendered
+    container so units stay 1:1 with pixels."""
+    if not HTML.exists():
+        pytest.skip("console not built yet")
+    t = HTML.read_text(encoding="utf-8")
+    assert 'setAttribute("viewBox"' in t
+    assert "getBoundingClientRect().width" in t
+    assert 'addEventListener("resize"' in t, "no redraw on resize"
+
+
+def test_scrollbars_are_themed_for_both_engines():
+    if not HTML.exists():
+        pytest.skip("console not built yet")
+    t = HTML.read_text(encoding="utf-8")
+    assert "::-webkit-scrollbar" in t
+    assert "scrollbar-color" in t, "Firefox scrollbars left on the OS theme"
+
+
+def test_page_contains_no_random_generated_data():
+    """A suggested code block drew the hydrophone panel from Math.random(),
+    one message after praising this project for computing the real envelope.
+    Nothing on this page may be generated from randomness."""
+    if not HTML.exists():
+        pytest.skip("console not built yet")
+    t = HTML.read_text(encoding="utf-8")
+    assert "Math.random" not in t
