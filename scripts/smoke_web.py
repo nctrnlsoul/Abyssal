@@ -36,6 +36,19 @@ check("citations verified", d["verification"]["passed"] == d["verification"]["ch
       f"{d['verification']['passed']}/{d['verification']['checked']}")
 check("no-store on run", r.headers.get("Cache-Control") == "no-store")
 
+r = c.get("/api/waveform")
+w = r.json()
+check("GET /api/waveform 200", r.status_code == 200)
+check("waveform is the real 60s clip", w.get("seconds") == 60.0 and w.get("rate") == 16000,
+      f"{w.get('seconds')}s @ {w.get('rate')}Hz")
+check("envelope normalized", max(w["peaks"]) == 1.0)
+
+r = c.get("/api/source-image")
+check("GET /api/source-image 200", r.status_code == 200)
+check("source image is a png", r.headers.get("content-type") == "image/png",
+      f"{len(r.content)} bytes")
+check("source image carries headers", "Content-Security-Policy" in r.headers)
+
 r = c.get("/healthz")
 check("GET /healthz 200", r.status_code == 200)
 

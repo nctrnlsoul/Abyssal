@@ -34,11 +34,12 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 
 from core.synthesis import (
     FL_CLOSURE_TRIGGER_CELLS_PER_L, ruler_segments, trigger_position_pct,
 )
+from core.waveform import envelope
 
 app = FastAPI(title="Abyssal", docs_url=None, redoc_url=None, openapi_url=None)
 
@@ -244,6 +245,47 @@ def bands() -> JSONResponse:
         "trigger_pct": trigger_position_pct(),
         "trigger_cells_per_l": FL_CLOSURE_TRIGGER_CELLS_PER_L,
     }, 200)
+
+
+_CLIP = _ROOT / "data" / "reef_window_a.wav"
+try:
+    # Computed once at import. It is a fixed committed clip, so recomputing it
+    # per request would be waste, and failing to serve it must not take the
+    # console down: the waveform is an enrichment, the citations are the point.
+    _WAVE = envelope(str(_CLIP)) if _CLIP.exists() else None
+except Exception:
+    _WAVE = None
+
+
+@app.get("/api/waveform")
+def waveform() -> JSONResponse:
+    """Peak envelope of the actual hydrophone clip the acoustic agent read.
+
+    Real data, not a decorative sine wave. If it is unavailable the page draws
+    nothing rather than drawing something invented.
+    """
+    if not _WAVE:
+        return _json({"error": "waveform unavailable"}, 503)
+    return _json({**_WAVE, "source": "NOAA/Navy SanctSound FK04, Florida Keys NMS"}, 200)
+
+
+_HAB = _ROOT / "data" / "hab_forecast_cellcounts.png"
+
+
+@app.get("/api/source-image")
+def source_image() -> Response:
+    """The exact NOAA frame the vision agent read.
+
+    Served so a viewer can check the agent's reading against the source rather
+    than taking the structured output on trust. Same principle as the citation
+    verifier: the claim and the thing it was made from, side by side.
+    """
+    if not _HAB.exists():
+        return _json({"error": "source image unavailable"}, 503)
+    r = Response(_HAB.read_bytes(), media_type="image/png")
+    r.headers.update(_HEADERS)
+    r.headers["Cache-Control"] = "public, max-age=3600"
+    return r
 
 
 @app.get("/healthz")

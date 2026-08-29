@@ -19,6 +19,14 @@ data/*.png
 # 78 MB download. See the negation below.
 !data/reef_window_*.wav
 
+# The NOAA forecast image is committed too, at 534 KB. It is the exact frame
+# the vision agent analyzed, it is US Government public domain, and the console
+# shows it beside the generated map so a viewer can check the agent's reading
+# against the source. A deployed instance that cannot show its own evidence is
+# not showing evidence. It is also date-stamped by NOAA and rotates daily, so
+# the committed copy IS the artifact.
+!data/hab_forecast_cellcounts.png
+
 # Python
 __pycache__/
 *.py[cod]

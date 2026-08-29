@@ -111,6 +111,77 @@ body { overflow-x: hidden; }
 .panel { background: var(--surface); border: 1px solid var(--rule);
          border-radius: 4px; padding: var(--s3) var(--s4) var(--s4); }
 
+/* ---------- global status ---------- */
+.status-line {
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--text-muted);
+  display: inline-flex; align-items: center; gap: var(--s2);
+}
+.status-line .dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted);
+  flex: 0 0 auto;
+}
+.status-line[data-state="running"] { color: var(--state-warn); }
+.status-line[data-state="running"] .dot { background: var(--state-warn);
+  animation: statusPulse 1s ease-in-out infinite; }
+.status-line[data-state="done"] { color: var(--state-ok); }
+.status-line[data-state="done"] .dot { background: var(--state-ok); }
+@keyframes statusPulse { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+
+/* ---------- agent timeline: a spine, not four unrelated boxes ---------- */
+/* Adopted from a suggestion that was right about the metaphor. Agents hand work
+   down a pipeline, so the UI should read as one path, not a stack of cards. */
+.timeline { position: relative; padding-left: 22px; }
+.timeline::before {
+  content: ""; position: absolute; left: 6px; top: 6px; bottom: 6px; width: 1px;
+  background: var(--rule);
+}
+.tl-fill {
+  position: absolute; left: 6px; top: 6px; width: 1px; height: 0;
+  background: linear-gradient(to bottom, var(--state-ok), var(--accent));
+  transition: height .45s cubic-bezier(.22,.61,.36,1);
+  box-shadow: 0 0 8px rgba(56,214,224,.5);
+}
+.tl-node { position: relative; padding: 10px 0 14px; min-height: 44px; }
+.tl-node:last-child { padding-bottom: 2px; }
+.tl-dot {
+  position: absolute; left: -20px; top: 14px; width: 11px; height: 11px;
+  border-radius: 50%; background: var(--field);
+  border: 1px solid var(--rule); transition: all .3s ease;
+}
+.tl-node[data-state="RUNNING"] .tl-dot {
+  border-color: var(--state-warn); background: var(--state-warn);
+  animation: statusPulse 1s ease-in-out infinite;
+}
+.tl-node[data-state="COMPLETE"] .tl-dot {
+  border-color: var(--state-ok); background: var(--state-ok);
+  box-shadow: 0 0 9px rgba(62,213,152,.65);
+}
+.tl-head { display: flex; justify-content: space-between; align-items: baseline;
+           gap: var(--s2); }
+.tl-name { color: var(--text); font-size: .82rem; }
+.tl-fn { font-family: var(--mono); font-size: .66rem; color: var(--text-muted);
+         display: block; margin-top: 1px; }
+.tl-state { font-family: var(--mono); font-size: .66rem; font-weight: 700;
+            letter-spacing: .06em; color: var(--text-muted); white-space: nowrap; }
+.tl-node[data-state="RUNNING"] .tl-state { color: var(--state-warn); }
+.tl-node[data-state="COMPLETE"] .tl-state { color: var(--state-ok); }
+/* meaning never carried by color alone */
+.tl-state::before { content: "\00b7 "; }
+.tl-node[data-state="RUNNING"] .tl-state::before { content: "\25b8 "; }
+.tl-node[data-state="COMPLETE"] .tl-state::before { content: "\2713 "; }
+
+/* ---------- dual pane: what the agent read, next to what it made ---------- */
+.panes { display: grid; grid-template-columns: 1fr; gap: var(--s3); }
+@media (min-width: 760px) { .panes { grid-template-columns: 1fr 1fr; } }
+.pane > h3 {
+  font-size: .64rem; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--text-muted); margin: 0 0 var(--s2); font-weight: 600;
+}
+.pane img, .pane svg { width: 100%; height: auto; display: block;
+  border: 1px solid var(--rule); border-radius: 3px; background: #0b1220; }
+.pane figcaption { font-size: .68rem; color: var(--text-muted); margin-top: var(--s2); }
+
 /* ---------- agent fleet ---------- */
 .node { display: flex; align-items: center; justify-content: space-between;
         gap: var(--s2); padding: 10px 12px; border: 1px solid var(--rule);
@@ -189,6 +260,77 @@ footer a { color: var(--text-muted); }
   .wrap { padding-left: var(--s3); padding-right: var(--s3); }
 }
 
+/* ---------- ambient depth ---------- */
+/* Two very slow radial drifts. transform and opacity only, so it composites on
+   the GPU and never touches layout. This is the one place a page like this can
+   feel alive without any element actually moving. */
+.deep {
+  position: fixed; inset: -20%; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(38% 30% at 22% 28%, rgba(56,214,224,.055), transparent 70%),
+    radial-gradient(42% 34% at 76% 68%, rgba(14,124,136,.075), transparent 70%);
+  animation: drift 34s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes drift {
+  from { transform: translate3d(-1.5%, -1%, 0) scale(1.02); }
+  to   { transform: translate3d(1.5%, 1.5%, 0) scale(1.08); }
+}
+.wrap { position: relative; z-index: 1; }
+
+/* ---------- boot sequence ---------- */
+.boot { opacity: 0; transform: translateY(8px); animation: bootIn .55s ease-out forwards; }
+.boot:nth-of-type(1) { animation-delay: .05s; }
+@keyframes bootIn { to { opacity: 1; transform: none; } }
+header { animation: bootIn .5s ease-out both; }
+.evidence { animation: bootIn .5s ease-out .12s both; }
+.ruler-block { animation: bootIn .5s ease-out .24s both; }
+.cols { animation: bootIn .5s ease-out .36s both; }
+
+/* ---------- waveform ---------- */
+.wave-panel { margin-bottom: var(--s4); }
+.wave-wrap { position: relative; }
+.wave { width: 100%; height: 92px; display: block; }
+.wave rect { fill: var(--accent-ink); transition: fill .18s linear; }
+.wave rect.lit { fill: var(--accent); }
+.playhead {
+  position: absolute; top: 0; bottom: 0; width: 2px; background: var(--accent);
+  box-shadow: 0 0 14px rgba(56,214,224,.75); opacity: 0; left: 0;
+  will-change: transform;
+}
+.playhead.on { opacity: 1; }
+.wave-meta { display: flex; justify-content: space-between; gap: var(--s3);
+             font-family: var(--mono); font-size: .66rem; color: var(--text-muted);
+             margin-top: var(--s2); flex-wrap: wrap; }
+
+/* ---------- sonar ping on the generated map ---------- */
+@keyframes ping {
+  0%   { transform: scale(1);   opacity: .85; }
+  70%  { transform: scale(4.2); opacity: 0; }
+  100% { transform: scale(4.2); opacity: 0; }
+}
+.artifact svg circle.ping {
+  transform-box: fill-box; transform-origin: center;
+  animation: ping 2.6s cubic-bezier(.22,.61,.36,1) infinite;
+}
+
+/* ---------- ruler trigger draws in ---------- */
+.trigger { transform-origin: top; }
+.trigger.draw { animation: drawDown .7s cubic-bezier(.22,.61,.36,1) both; }
+@keyframes drawDown { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.trigger-label.draw { animation: bootIn .5s ease-out .45s both; }
+
+/* ---------- trace lines enter ---------- */
+.trace-row { animation: rowIn .28s ease-out both; }
+@keyframes rowIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
+
+/* ---------- verdict lands ---------- */
+.verdict.land { animation: land .6s cubic-bezier(.22,.61,.36,1) both; }
+@keyframes land {
+  from { opacity: 0; transform: translateY(14px) scale(.99); }
+  to   { opacity: 1; transform: none; }
+}
+
 /* ---------- scanlines ---------- */
 /* Pure CSS, zero requests, pointer-events none so it cannot eat a click.
    Kept faint: at higher opacity it starts fighting the 4.5:1 contrast the
@@ -233,10 +375,17 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
      character by character and simply appears. */
   * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
   .node[data-state="RUNNING"] { animation: none; border-color: var(--state-warn); }
+  .deep { animation: none; }
+  .artifact svg circle.ping { animation: none; opacity: 0; }
+  .playhead { transition: none; }
+  /* Everything still ARRIVES, it just does not travel. bootIn/rowIn/land keep
+     their opacity endpoints because animation-duration above collapses them
+     to instant rather than removing the forwards fill. */
 }
 </style>
 </head>
 <body>
+<div class="deep" aria-hidden="true"></div>
 <div class="scanlines" aria-hidden="true"></div>
 <div class="wrap">
 
@@ -246,6 +395,9 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
       <span class="chip" id="chip-model">gemini-3.5-flash</span>
       <span class="chip">google adk</span>
       <span class="chip rec" id="chip-mode">recorded run</span>
+      <span class="status-line" id="status-line" data-state="idle" role="status">
+        <span class="dot" aria-hidden="true"></span><span id="status-text">plane idle</span>
+      </span>
     </div>
     <p class="sub">
       Four agents over real public data: a NOAA hydrophone recording from the Florida Keys,
@@ -272,27 +424,58 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
 
   <div class="cols">
     <div>
+      <section class="panel wave-panel" aria-labelledby="wv-h">
+        <h2 id="wv-h">Hydrophone, 60 s window</h2>
+        <div class="wave-wrap">
+          <svg class="wave" id="wave" viewBox="0 0 320 92" preserveAspectRatio="none"
+               role="img" aria-label="Peak amplitude envelope of the analyzed recording"></svg>
+          <div class="playhead" id="playhead"></div>
+        </div>
+        <div class="wave-meta">
+          <span id="wave-src">SanctSound FK04</span>
+          <span id="wave-len"></span>
+        </div>
+      </section>
+
       <section class="panel" aria-labelledby="fleet-h">
-        <h2 id="fleet-h">Agent fleet</h2>
-        <div class="node" data-state="PENDING" id="node-sonar">
-          <span class="node-name">Acoustic<span class="fn">acoustic_auditor</span></span>
-          <span class="node-state">PENDING</span>
-        </div>
-        <div class="node" data-state="PENDING" id="node-vision">
-          <span class="node-name">Imagery<span class="fn">imagery_inspector</span></span>
-          <span class="node-state">PENDING</span>
-        </div>
-        <div class="node" data-state="PENDING" id="node-regulatory">
-          <span class="node-name">Regulatory<span class="fn">regulatory_ombudsman</span></span>
-          <span class="node-state">PENDING</span>
-        </div>
-        <div class="node" data-state="PENDING" id="node-decide">
-          <span class="node-name">Decision<span class="fn">core.synthesis, no model</span></span>
-          <span class="node-state">PENDING</span>
-        </div>
-        <div class="node" data-state="PENDING" id="node-mapper">
-          <span class="node-name">Report<span class="fn">remediation_reporter</span></span>
-          <span class="node-state">PENDING</span>
+        <h2 id="fleet-h">Agent pipeline</h2>
+        <div class="timeline">
+          <div class="tl-fill" id="tl-fill"></div>
+          <div class="tl-node" data-state="PENDING" id="node-sonar">
+            <span class="tl-dot" aria-hidden="true"></span>
+            <div class="tl-head">
+              <span class="tl-name">Acoustic<span class="tl-fn">acoustic_auditor</span></span>
+              <span class="tl-state">PENDING</span>
+            </div>
+          </div>
+          <div class="tl-node" data-state="PENDING" id="node-vision">
+            <span class="tl-dot" aria-hidden="true"></span>
+            <div class="tl-head">
+              <span class="tl-name">Imagery<span class="tl-fn">imagery_inspector</span></span>
+              <span class="tl-state">PENDING</span>
+            </div>
+          </div>
+          <div class="tl-node" data-state="PENDING" id="node-regulatory">
+            <span class="tl-dot" aria-hidden="true"></span>
+            <div class="tl-head">
+              <span class="tl-name">Regulatory<span class="tl-fn">regulatory_ombudsman</span></span>
+              <span class="tl-state">PENDING</span>
+            </div>
+          </div>
+          <div class="tl-node" data-state="PENDING" id="node-decide">
+            <span class="tl-dot" aria-hidden="true"></span>
+            <div class="tl-head">
+              <span class="tl-name">Decision<span class="tl-fn">core.synthesis, no model</span></span>
+              <span class="tl-state">PENDING</span>
+            </div>
+          </div>
+          <div class="tl-node" data-state="PENDING" id="node-mapper">
+            <span class="tl-dot" aria-hidden="true"></span>
+            <div class="tl-head">
+              <span class="tl-name">Report<span class="tl-fn">remediation_reporter</span></span>
+              <span class="tl-state">PENDING</span>
+            </div>
+          </div>
         </div>
       </section>
     </div>
@@ -311,9 +494,19 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
       </section>
 
       <section class="panel artifact" id="artifact-panel" aria-labelledby="ar-h" hidden>
-        <h2 id="ar-h">Artifact generated by tool call</h2>
-        <div id="artifact-svg"></div>
-        <p class="artifact-note" id="artifact-note"></p>
+        <h2 id="ar-h">What the agent read, and what it produced</h2>
+        <div class="panes">
+          <figure class="pane" style="margin:0">
+            <h3>Source, read by imagery_inspector</h3>
+            <img id="source-image" alt="NOAA NCCOS harmful algal bloom operational forecast for Florida, showing Karenia brevis sample categories" src="api/source-image">
+            <figcaption id="source-caption"></figcaption>
+          </figure>
+          <div class="pane">
+            <h3>Generated, by render_incident_map</h3>
+            <div id="artifact-svg"></div>
+            <p class="artifact-note" id="artifact-note"></p>
+          </div>
+        </div>
         <div class="advisory" id="advisory"></div>
       </section>
 
@@ -402,6 +595,90 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     t.appendChild(p);
   }
 
+  // ---- waveform. real envelope of the clip the acoustic agent read ----------
+  var waveBars = [], waveSeconds = 0;
+
+  function drawWave(d) {
+    var svg = $("wave");
+    while (svg.firstChild) { svg.removeChild(svg.firstChild); }
+    var peaks = d.peaks || [];
+    if (!peaks.length) { return; }
+    waveSeconds = d.seconds || 0;
+    var W = 320, H = 92, n = peaks.length;
+    var bw = W / n;
+    var NS = "http://www.w3.org/2000/svg";
+    waveBars = peaks.map(function (p, i) {
+      // Floor of 1.5 units so a quiet bucket still reads as a bucket rather
+      // than as a gap in the recording.
+      var h = Math.max(1.5, p * (H - 8));
+      var r = document.createElementNS(NS, "rect");
+      r.setAttribute("x", (i * bw + bw * 0.18).toFixed(2));
+      r.setAttribute("y", ((H - h) / 2).toFixed(2));
+      r.setAttribute("width", (bw * 0.64).toFixed(2));
+      r.setAttribute("height", h.toFixed(2));
+      svg.appendChild(r);
+      return r;
+    });
+    text($("wave-len"), waveSeconds.toFixed(0) + " s at " +
+         ((d.rate || 0) / 1000).toFixed(0) + " kHz, " + n + " buckets");
+    text($("wave-src"), d.source || "hydrophone");
+  }
+
+  var sweepDone = null;
+
+  function finishSweep() {
+    // Terminal state, reachable without a single animation frame.
+    waveBars.forEach(function (b) { b.classList.add("lit"); });
+    $("playhead").classList.remove("on");
+    $("playhead").style.transform = "";
+    sweepDone = null;
+  }
+
+  function sweepWave(ms) {
+    var head = $("playhead"), wrap = head.parentNode;
+    if (!waveBars.length) { return; }
+    waveBars.forEach(function (b) { b.classList.remove("lit"); });
+
+    if (REDUCED) { finishSweep(); return; }
+
+    head.classList.add("on");
+    var t0 = performance.now();
+    var width = wrap.getBoundingClientRect().width;
+
+    function step(now) {
+      var f = Math.min(1, (now - t0) / ms);
+      head.style.transform = "translateX(" + (f * width).toFixed(1) + "px)";
+      var upto = Math.floor(f * waveBars.length);
+      for (var i = 0; i < upto; i++) {
+        if (!waveBars[i].classList.contains("lit")) { waveBars[i].classList.add("lit"); }
+      }
+      if (f < 1) { requestAnimationFrame(step); }
+      else { finishSweep(); }
+    }
+    requestAnimationFrame(step);
+
+    // GUARANTEED COMPLETION, and it is not belt-and-braces.
+    //
+    // requestAnimationFrame is throttled to zero in a backgrounded or
+    // non-painting tab. Measured here: the sweep started, the playhead class
+    // went on, and step() never ran once, so style.transform stayed empty and
+    // not one bar ever lit. A judge who tabs away mid-run, or a screen
+    // recorder that backgrounds the window, would see the waveform freeze
+    // half-drawn and stay that way.
+    //
+    // So the visual is driven by rAF and the STATE is driven by a timer. The
+    // animation can be skipped; the outcome cannot.
+    if (sweepDone) { clearTimeout(sweepDone); }
+    sweepDone = setTimeout(finishSweep, ms + 120);
+    timers.push(function () { if (sweepDone) { clearTimeout(sweepDone); sweepDone = null; } });
+  }
+
+  // Catch up the instant the tab becomes visible again, rather than leaving a
+  // half-lit waveform on screen until the next replay.
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible" && sweepDone) { finishSweep(); }
+  });
+
   // ---- the signature element -----------------------------------------------
   function drawRuler(data) {
     var bands = $("bands");
@@ -424,12 +701,12 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     });
 
     var line = document.createElement("div");
-    line.className = "trigger";
+    line.className = "trigger draw";
     line.style.left = data.trigger_pct + "%";
     $("ruler").appendChild(line);
 
     var lab = document.createElement("div");
-    lab.className = "trigger-label";
+    lab.className = "trigger-label draw";
     lab.style.left = data.trigger_pct + "%";
     lab.textContent = data.trigger_cells_per_l.toLocaleString() + " cells/L closure trigger";
     $("ruler").appendChild(lab);
@@ -489,15 +766,39 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
   var NODE_OF = { sonar: "sonar", vision: "vision", regulatory: "regulatory",
                   decide: "decide", mapper: "mapper" };
 
+  var TL_ORDER = ["sonar", "vision", "regulatory", "decide", "mapper"];
+
   function setNode(stage, state) {
     var el = $("node-" + NODE_OF[stage]);
     if (!el) { return; }
     el.setAttribute("data-state", state);
-    el.querySelector(".node-state").textContent = state;
+    el.querySelector(".tl-state").textContent = state;
+    growSpine();
+  }
+
+  function growSpine() {
+    // The spine fills to the last completed node, so the pipeline reads as one
+    // path with progress on it rather than five independent lights.
+    var fill = $("tl-fill");
+    var last = null;
+    TL_ORDER.forEach(function (s) {
+      var el = $("node-" + s);
+      if (el && el.getAttribute("data-state") !== "PENDING") { last = el; }
+    });
+    if (!last) { fill.style.height = "0"; return; }
+    var top = $("node-" + TL_ORDER[0]).offsetTop;
+    fill.style.height = Math.max(0, (last.offsetTop + last.offsetHeight / 2) - top) + "px";
+  }
+
+  function setStatus(state, label) {
+    var el = $("status-line");
+    el.setAttribute("data-state", state);
+    text($("status-text"), label);
   }
 
   function resetNodes() {
     Object.keys(NODE_OF).forEach(function (s) { setNode(s, "PENDING"); });
+    $("tl-fill").style.height = "0";
   }
 
   function addRow(r) {
@@ -518,6 +819,18 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     var host = $("trace");
     host.appendChild(row);
     setNode(stage, level === "COMPLETE" ? "COMPLETE" : "RUNNING");
+
+    // The sweep runs while the acoustic stage is actually working, and its
+    // duration is the real recorded gap between dispatch and completion,
+    // scaled by the replay speed. It is a progress indicator for a thing that
+    // really happened, not an idle loop.
+    if (stage === "sonar" && r.msg.indexOf("ADK Runner") === 0) {
+      var done = (run.trace || []).filter(function (x) {
+        return x.tag.indexOf("sonar:COMPLETE") === 0;
+      })[0];
+      var span = done ? Math.max(400, (done.at - r.at) * 1000 / speed) : 1200;
+      sweepWave(span);
+    }
 
     // Stream the characters so a terminal reads like a terminal. Under
     // prefers-reduced-motion the text simply appears: reduce, not kill.
@@ -553,7 +866,12 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     text($("v-matrix"), a.federal_matrix);
     text($("v-cellthr"), a.cell_threshold_in_federal_doc ? "present" : "absent, 0 occurrences");
     text($("v-tools"), (d.tool_calls || []).join(", ") || "none");
-    $("verdict").hidden = false;
+    setStatus("done", "run complete");
+    var v = $("verdict");
+    v.hidden = false;
+    v.classList.remove("land");
+    void v.offsetWidth;          // restart the animation on a replay
+    v.classList.add("land");
     showArtifacts(d);
   }
 
@@ -566,6 +884,24 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
       var node = safeSvg(map.svg);
       if (node) {
         host.appendChild(node);
+        // Ping rings on the sites that are actually above the trigger. Only
+        // those: pinging a "not present" site would be decoration asserting
+        // something the data does not say.
+        var NS = "http://www.w3.org/2000/svg";
+        Array.prototype.slice.call(node.querySelectorAll("circle")).forEach(function (c, i) {
+          var fill = (c.getAttribute("fill") || "").toLowerCase();
+          if (fill !== "#eab308" && fill !== "#f97316" && fill !== "#ef4444") { return; }
+          var ring = document.createElementNS(NS, "circle");
+          ring.setAttribute("cx", c.getAttribute("cx"));
+          ring.setAttribute("cy", c.getAttribute("cy"));
+          ring.setAttribute("r", c.getAttribute("r"));
+          ring.setAttribute("fill", "none");
+          ring.setAttribute("stroke", fill);
+          ring.setAttribute("stroke-width", "0.8");
+          ring.setAttribute("class", "ping");
+          ring.style.animationDelay = (i * 0.45) + "s";
+          c.parentNode.insertBefore(ring, c);
+        });
         text($("artifact-note"),
           "Drawn by the render_incident_map tool call during stage 4, from the " +
           (map.sites_rendered || 0) + " monitoring sites read off the NOAA map. " +
@@ -589,6 +925,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     $("trace").innerHTML = "";
     $("verdict").hidden = true;
     resetNodes();
+    setStatus("running", "executing pipeline");
     var rows = run.trace || [];
     rows.forEach(function (r) {
       timers.push(setTimeout(function () { addRow(r); }, (r.at * 1000) / speed));
@@ -610,6 +947,29 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     return r.json();
   }).then(drawRuler).catch(function () {
     text($("ruler-read"), "Band data unavailable. The ruler cannot be drawn from stale values, so it is not drawn.");
+  });
+
+  (function () {
+    var img = $("source-image");
+    img.addEventListener("load", function () {
+      text($("source-caption"),
+        "NOAA NCCOS HAB Operational Forecast, " + img.naturalWidth + " by " +
+        img.naturalHeight + " px. The exact frame the imagery agent read. " +
+        "Five category bands, no numeric values anywhere on it.");
+    });
+    img.addEventListener("error", function () {
+      // Terminal branch. Do not leave a broken image icon on a judged surface.
+      img.hidden = true;
+      text($("source-caption"), "Source image unavailable on this instance.");
+    });
+  })();
+
+  fetch("api/waveform").then(function (r) {
+    if (!r.ok) { throw new Error("waveform"); }
+    return r.json();
+  }).then(drawWave).catch(function () {
+    // Draw nothing rather than drawing something invented.
+    text($("wave-len"), "waveform unavailable");
   });
 
   fetch("api/run").then(function (r) {

@@ -91,3 +91,56 @@ def test_page_sanitizes_before_injecting_generated_svg():
     assert "importNode" in t
     assert 'innerHTML = markup' not in t
     assert '.innerHTML = map.svg' not in t
+
+
+# --- the waveform is real data, so it gets asserted like data ----------------
+
+def test_waveform_envelope_comes_from_the_real_clip():
+    import pathlib
+    from core.waveform import envelope
+    clip = pathlib.Path(__file__).resolve().parents[1] / "data" / "reef_window_a.wav"
+    if not clip.exists():
+        pytest.skip("clip not present")
+    env = envelope(str(clip), buckets=64)
+    assert env["rate"] == 16000, "clip should be the 16 kHz mono cut"
+    assert 59 <= env["seconds"] <= 61, f"expected a 60s window, got {env['seconds']}"
+    assert len(env["peaks"]) == 64
+    assert all(0.0 <= p <= 1.0 for p in env["peaks"])
+    assert max(env["peaks"]) == 1.0, "envelope must be normalized to its own peak"
+    # A reef soundscape is not silence and is not a constant tone.
+    assert min(env["peaks"]) < 0.9, "envelope is suspiciously flat for a real recording"
+
+
+def test_sweep_has_a_terminal_state_not_driven_by_animation_frames():
+    """requestAnimationFrame is throttled to zero in a backgrounded tab.
+    Measured in-browser: the sweep started, the playhead class was applied, and
+    step() never ran, so no bar ever lit and the waveform sat frozen. A demo
+    surface cannot have its OUTCOME depend on the tab being painted, so the
+    visual is rAF-driven and the state is timer-driven."""
+    if not HTML.exists():
+        pytest.skip("console not built yet")
+    t = HTML.read_text(encoding="utf-8")
+    assert "finishSweep" in t, "no terminal state for the sweep"
+    assert "setTimeout(finishSweep" in t, "terminal state is not timer-driven"
+    assert "visibilitychange" in t, "no catch-up when the tab comes back"
+
+
+def test_every_animation_selector_matches_a_real_element_or_class():
+    """The design skill's rule: never leave dead animation code, and verify by
+    search rather than by reading."""
+    if not HTML.exists():
+        pytest.skip("console not built yet")
+    import re
+    t = HTML.read_text(encoding="utf-8")
+    animated = set(re.findall(r"\.([a-z-]+)(?:\.[a-z-]+)?\s*\{[^}]*animation:", t))
+
+    # Look for the class OUTSIDE the stylesheet. The first version of this test
+    # matched a handful of literal quoting patterns and produced a FALSE
+    # POSITIVE on .trigger-label, which is applied as className = "trigger-label
+    # draw". The class was live; the assertion was too narrow. Stripping the
+    # style block and searching the remaining markup plus script is both simpler
+    # and actually correct.
+    body = re.sub(r"<style>.*?</style>", "", t, flags=re.S)
+    for cls in animated:
+        assert re.search(r"\b" + re.escape(cls) + r"\b", body), \
+            f"animation targets .{cls} but nothing outside the stylesheet ever carries it"
