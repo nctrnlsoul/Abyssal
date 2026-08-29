@@ -111,6 +111,62 @@ body { overflow-x: hidden; }
 .panel { background: var(--surface); border: 1px solid var(--rule);
          border-radius: 4px; padding: var(--s3) var(--s4) var(--s4); }
 
+/* ---------- status ring: vanilla inline SVG, no dependency ---------- */
+/* Rotation and stroke-dashoffset only, so it composites on the GPU and never
+   touches layout. Three concentric parts moving at different rates reads as
+   instrumentation; one spinning circle reads as a loading gif. */
+.ring { width: 26px; height: 26px; flex: 0 0 auto; }
+.ring circle, .ring path { fill: none; stroke-linecap: round; }
+.ring .track { stroke: var(--rule); stroke-width: 1.6; }
+.ring .seg-a, .ring .seg-b { stroke: var(--text-muted); stroke-width: 1.8;
+                             transform-origin: 50% 50%; }
+.ring .core { fill: var(--text-muted); stroke: none; }
+.ring .tick-mark { stroke: var(--state-ok); stroke-width: 2; stroke-linecap: round;
+                   stroke-dasharray: 14; stroke-dashoffset: 14; }
+
+.status-line[data-state="running"] .ring .seg-a {
+  stroke: var(--state-warn); animation: ringSpin 1.6s linear infinite;
+}
+.status-line[data-state="running"] .ring .seg-b {
+  stroke: var(--accent); animation: ringSpin 2.6s linear infinite reverse;
+}
+.status-line[data-state="running"] .ring .core {
+  fill: var(--state-warn); animation: statusPulse 1s ease-in-out infinite;
+}
+.status-line[data-state="done"] .ring .seg-a,
+.status-line[data-state="done"] .ring .seg-b { stroke: var(--state-ok); }
+.status-line[data-state="done"] .ring .core { fill: transparent; }
+.status-line[data-state="done"] .ring .tick-mark {
+  animation: drawTick .45s ease-out .05s forwards;
+}
+@keyframes ringSpin { to { transform: rotate(360deg); } }
+@keyframes drawTick { to { stroke-dashoffset: 0; } }
+
+/* ---------- the packet travelling down the spine ---------- */
+/* This is the "data moving between agents" idea, built as one element that
+   actually moves between the node positions the page already knows, rather
+   than as decoration that fires on a timer of its own. */
+.tl-packet {
+  position: absolute; left: 3.5px; top: 0; width: 7px; height: 7px;
+  border-radius: 50%; background: var(--accent);
+  box-shadow: 0 0 10px rgba(56,214,224,.9); opacity: 0;
+  transition: transform .5s cubic-bezier(.22,.61,.36,1), opacity .25s linear;
+  will-change: transform;
+}
+.tl-packet.on { opacity: 1; }
+
+/* ---------- coastline draws itself on the generated map ---------- */
+.artifact svg path[stroke="#5b7d8c"] {
+  stroke-dasharray: 300; stroke-dashoffset: 300;
+  animation: drawCoast 1.4s ease-out .15s forwards;
+}
+@keyframes drawCoast { to { stroke-dashoffset: 0; } }
+
+/* ---------- citations arrive ---------- */
+.cite { animation: citeIn .45s ease-out both; }
+.cite:nth-of-type(2) { animation-delay: .1s; }
+@keyframes citeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
 /* ---------- global status ---------- */
 .status-line {
   font-family: var(--mono); font-size: .68rem; letter-spacing: .1em;
@@ -391,6 +447,10 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
   * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
   .node[data-state="RUNNING"] { animation: none; border-color: var(--state-warn); }
   .deep { animation: none; }
+  .ring .seg-a, .ring .seg-b, .ring .core { animation: none !important; }
+  .ring .tick-mark { stroke-dashoffset: 0; animation: none; }
+  .tl-packet { transition: none; opacity: 0 !important; }
+  .artifact svg path[stroke="#5b7d8c"] { stroke-dashoffset: 0; animation: none; }
   .artifact svg circle.ping { animation: none; opacity: 0; }
   .playhead { transition: none; }
   /* Everything still ARRIVES, it just does not travel. bootIn/rowIn/land keep
@@ -411,7 +471,15 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
       <span class="chip">google adk</span>
       <span class="chip rec" id="chip-mode">recorded run</span>
       <span class="status-line" id="status-line" data-state="idle" role="status">
-        <span class="dot" aria-hidden="true"></span><span id="status-text">plane idle</span>
+        <svg class="ring" viewBox="0 0 24 24" aria-hidden="true">
+          <circle class="track" cx="12" cy="12" r="10"/>
+          <circle class="seg-a" cx="12" cy="12" r="10"
+                  stroke-dasharray="14 48" stroke-dashoffset="0"/>
+          <circle class="seg-b" cx="12" cy="12" r="6.5"
+                  stroke-dasharray="7 34" stroke-dashoffset="0"/>
+          <circle class="core" cx="12" cy="12" r="2.4"/>
+          <path class="tick-mark" d="M7.5 12.2 L10.6 15.2 L16.5 8.8"/>
+        </svg><span id="status-text">plane idle</span>
       </span>
     </div>
     <p class="sub">
@@ -457,6 +525,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
         <h2 id="fleet-h">Agent pipeline</h2>
         <div class="timeline">
           <div class="tl-fill" id="tl-fill"></div>
+          <div class="tl-packet" id="tl-packet" aria-hidden="true"></div>
           <div class="tl-node" data-state="PENDING" id="node-sonar">
             <span class="tl-dot" aria-hidden="true"></span>
             <div class="tl-head">
@@ -853,12 +922,27 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
 
   var TL_ORDER = ["sonar", "vision", "regulatory", "decide", "mapper"];
 
+  function movePacket(stage, state) {
+    // One element that actually travels to the node currently working, using
+    // the positions the page already knows. Decoration that fires on its own
+    // timer would drift out of step with the trace it claims to represent.
+    var pk = $("tl-packet");
+    if (!pk || REDUCED) { return; }
+    var el = $("node-" + NODE_OF[stage]);
+    var first = $("node-" + TL_ORDER[0]);
+    if (!el || !first) { return; }
+    var y = el.offsetTop - first.offsetTop + (el.offsetHeight / 2) - 3.5;
+    pk.style.transform = "translateY(" + y.toFixed(1) + "px)";
+    pk.classList.toggle("on", state === "RUNNING");
+  }
+
   function setNode(stage, state) {
     var el = $("node-" + NODE_OF[stage]);
     if (!el) { return; }
     el.setAttribute("data-state", state);
     el.querySelector(".tl-state").textContent = state;
     growSpine();
+    movePacket(stage, state);
   }
 
   function growSpine() {
@@ -884,6 +968,9 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
   function resetNodes() {
     Object.keys(NODE_OF).forEach(function (s) { setNode(s, "PENDING"); });
     $("tl-fill").style.height = "0";
+    var pk = $("tl-packet");
+    pk.classList.remove("on");
+    pk.style.transform = "translateY(0)";
   }
 
   function addRow(r) {

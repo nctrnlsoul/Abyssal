@@ -1,39 +1,43 @@
-Redesign the hydrophone panel, and make it say something
+Vanilla SVG micro-animation pass: status ring, spine packet, draw-ins
 
-It was a flat row of bars. Now it reads like an audio tool and, more to the
-point, it explains the acoustic agent's finding instead of decorating it.
+The suggested direction was right and this takes it: inline SVG animation, no
+framework, no dependency. Everything animates transform or stroke-dashoffset
+only, so nothing touches layout.
 
-  mirrored waveform about a center line, the way audio is actually drawn
-  a real time axis with second ticks, so the trace is anchored to the clip
-  a computed peak marker, positioned from core/waveform.py, not by eye
-  a live elapsed readout riding the playhead
-  a SECOND LANE: the same audio low pass filtered near 500 Hz
+  STATUS RING. Five-part inline SVG in the header. Two concentric segmented
+  arcs counter-rotate at different rates while running, a core dot pulses, and
+  on completion the arcs turn green and a checkmark strokes itself in with
+  stroke-dashoffset. Three parts at different rates read as instrumentation;
+  one spinning circle reads as a loading gif.
 
-THE LOW BAND IS THE POINT. The acoustic agent reported snapping shrimp plus a
-vessel engine. Those separate cleanly by frequency: engine noise is
-low-frequency rumble, snapping shrimp are broadband transients well above
-2 kHz. So a moving-average low pass at roughly a 500 Hz corner, stdlib only,
-no numpy, isolates the vessel component. The picture now shows the two things
-the agent said it heard.
+  SPINE PACKET. A glowing dot that travels down the agent timeline to whichever
+  node is actually working. This is the "data moving between agents" idea, but
+  driven by the real node offsets the page already knows rather than by a timer
+  of its own, so it cannot drift out of step with the trace it represents.
 
-AND THE HONEST PART, which changed the design. Measured on this clip, the low
-band peaks at 4.7 percent of the full band peak, because shrimp dominate the
-energy by more than an order of magnitude. On a shared axis it renders as a
-flat line: true, and useless. So the API returns BOTH scalings. `low_band`
-keeps the honest relative energy, `low_band_self` shows the shape, and the
-lane is drawn to its own scale with "SCALED INDEPENDENTLY" printed on the
-chart plus the exact 4.7 percent figure in the caption. Nobody should compare
-heights across lanes, so the page says so rather than hoping.
+  DRAW-INS. The coastline strokes itself onto the generated map, and the
+  citations rise in with a stagger.
 
-The filter is blunt and is labelled as one. No spectrogram is claimed and no
-frequency figure is asserted beyond the stated corner.
+WHAT WAS NOT TAKEN, and why:
 
-MY ERROR, recorded: Brian asked what the hydrophone was, a suggestion said to
-redesign it, and I argued at length against REMOVING it. Nobody proposed
-removal. I answered a position no one held instead of the question asked.
+  templates/index.html, Tailwind classes, /api/v1/status/{job_id}. Fifth pass
+  of the same three errors. None of those exist in this project.
 
-Two failures on the way, both mine and both caught by tests I wrote earlier:
-the American English check found "centre" in one of my own code comments, and
-the claim test caught the test count going stale again, 94 against 96.
+  "CRISIS PROTOCOL ACTIVE" as the status label. The finding is that the public
+  map is AMBIGUOUS, not that anything is on fire. A page whose chrome
+  contradicts its own verdict is a page a judge stops trusting. The label says
+  "executing pipeline" and then "run complete", and a test now fails the build
+  if crisis, critical, emergency or threat level appear on the console.
 
-96 tests pass.
+  The suggested spinner path was the stock Tailwind docs spinner, which is a
+  recognizable generic tell rather than something custom-built.
+
+prefers-reduced-motion handled throughout: rotation stops, the checkmark is
+drawn already, the packet stays hidden, the coastline is complete. Meaning is
+never carried by animation alone, the status TEXT always states the state.
+
+Four new tests: the ring must stay dependency-free, its keyframes must not
+animate any layout property, the packet must be positioned from real node
+offsets, and no crisis language may appear on the console.
+
+100 tests pass.

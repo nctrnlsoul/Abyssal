@@ -286,3 +286,48 @@ def test_waveform_reports_where_the_peaks_actually_are():
     assert 0 <= e["peak_at_seconds"] <= e["seconds"]
     assert 0 <= e["low_peak_at_seconds"] <= e["seconds"]
     assert e["peaks"][e["peak_bucket"]] == 1.0
+
+
+def test_status_ring_is_inline_svg_with_no_external_dependency():
+    """The upgrade direction was right: vanilla inline SVG micro-animation, no
+    framework. Assert it stayed vanilla rather than acquiring a library."""
+    if not HTML.exists():
+        pytest.skip("console not built yet")
+    t = HTML.read_text(encoding="utf-8")
+    assert 'class="ring"' in t and "<circle" in t
+    assert "ringSpin" in t and "drawTick" in t
+    for lib in ("cdn.", "unpkg", "jsdelivr", "<script src", "tailwind", "fontawesome"):
+        assert lib not in t.lower(), f"external dependency crept in: {lib}"
+
+
+def test_status_ring_animates_transform_and_dashoffset_only():
+    """Animating anything that triggers layout is the documented red flag."""
+    if not HTML.exists():
+        pytest.skip("console not built yet")
+    import re
+    t = HTML.read_text(encoding="utf-8")
+    block = t[t.index("@keyframes ringSpin"):t.index("@keyframes ringSpin") + 400]
+    for banned in ("width:", "height:", "top:", "left:", "margin"):
+        assert banned not in block, f"ringSpin animates {banned}, which forces layout"
+
+
+def test_packet_is_driven_by_real_node_positions_not_a_timer():
+    """The 'data moving between agents' idea, built so it cannot drift out of
+    step with the trace it represents."""
+    if not HTML.exists():
+        pytest.skip("console not built yet")
+    t = HTML.read_text(encoding="utf-8")
+    assert "function movePacket" in t
+    assert "offsetTop" in t, "packet position is not derived from the real nodes"
+    assert "movePacket(stage, state)" in t, "packet is never driven by stage changes"
+
+
+def test_no_crisis_language_on_the_console():
+    """A suggested status label read CRISIS PROTOCOL ACTIVE. The finding is that
+    the public map is ambiguous, not that anything is on fire, and a page whose
+    chrome contradicts its own verdict is a page a judge stops trusting."""
+    if not HTML.exists():
+        pytest.skip("console not built yet")
+    t = HTML.read_text(encoding="utf-8").lower()
+    for word in ("crisis", "critical", "emergency", "alert active", "threat level"):
+        assert word not in t, f"{word!r} on the console contradicts the finding"
