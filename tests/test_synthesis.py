@@ -101,3 +101,37 @@ def test_headline_matches_the_relation_it_reports():
             assert "at or above" in a.headline
         elif a.band_relation == "BELOW":
             assert "entirely below" in a.headline
+
+
+# --- the signature element's geometry ---------------------------------------
+
+def test_ruler_has_one_segment_per_published_band():
+    from core.synthesis import ruler_segments, FWC_BANDS
+    segs = ruler_segments()
+    assert len(segs) == len(FWC_BANDS)
+    assert sum(s["width_pct"] for s in segs) == pytest.approx(100.0)
+
+
+def test_ruler_segments_are_contiguous():
+    from core.synthesis import ruler_segments
+    segs = ruler_segments()
+    for a, b in zip(segs, segs[1:]):
+        assert a["start_pct"] + a["width_pct"] == pytest.approx(b["start_pct"])
+
+
+def test_trigger_line_lands_inside_the_very_low_segment():
+    """The whole thesis, asserted numerically. If a future rescale moves the
+    trigger out of 'very low', this fails rather than letting the graphic keep
+    telling a story the numbers no longer support."""
+    from core.synthesis import ruler_segments, trigger_position_pct
+    pos = trigger_position_pct()
+    very_low = next(s for s in ruler_segments() if s["category"] == "very low")
+    assert very_low["start_pct"] < pos < very_low["start_pct"] + very_low["width_pct"]
+
+
+def test_trigger_position_is_the_log_interpolated_value():
+    """5,000 sits at log10 69.9% through the 1,000 to 10,000 decade, so at
+    33.98% across a five-segment ruler. A linear reading would put it at 28.9%
+    and the line would sit visibly in the wrong place."""
+    from core.synthesis import trigger_position_pct
+    assert trigger_position_pct() == pytest.approx(33.98, abs=0.02)

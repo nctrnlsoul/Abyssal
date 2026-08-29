@@ -1,0 +1,199 @@
+{
+  "recorded_utc": "2026-08-29T02:39:10Z",
+  "model": "gemini-3.5-flash",
+  "wall_seconds": 115.4,
+  "trace": [
+    {
+      "at": 0.54,
+      "clock": "22:37:15",
+      "tag": "sonar:RUNNING",
+      "msg": "Uploading NOAA SanctSound FK04 clip, Florida Keys NMS..."
+    },
+    {
+      "at": 2.57,
+      "clock": "22:37:17",
+      "tag": "sonar:RUNNING",
+      "msg": "ADK Runner dispatched to acoustic_auditor..."
+    },
+    {
+      "at": 6.7,
+      "clock": "22:37:21",
+      "tag": "sonar:COMPLETE",
+      "msg": "Biological: snapping shrimp crackle. Anthropogenic: vessel engine. Density DENSE."
+    },
+    {
+      "at": 6.7,
+      "clock": "22:37:21",
+      "tag": "vision:RUNNING",
+      "msg": "Uploading NOAA NCCOS HAB operational forecast..."
+    },
+    {
+      "at": 8.3,
+      "clock": "22:37:22",
+      "tag": "vision:RUNNING",
+      "msg": "ADK Runner dispatched to imagery_inspector..."
+    },
+    {
+      "at": 19.57,
+      "clock": "22:37:34",
+      "tag": "vision:COMPLETE",
+      "msg": "Legend: 5 categories. Observed: not present, very low, low. Highest: low. Numeric values present: False."
+    },
+    {
+      "at": 19.57,
+      "clock": "22:37:34",
+      "tag": "regulatory:RUNNING",
+      "msg": "Uploading FDA NSSP 2023 Guide, 532 pages, 297,921 tokens..."
+    },
+    {
+      "at": 23.64,
+      "clock": "22:37:38",
+      "tag": "regulatory:RUNNING",
+      "msg": "ADK Runner dispatched to regulatory_ombudsman. Long context read..."
+    },
+    {
+      "at": 101.62,
+      "clock": "22:38:56",
+      "tag": "regulatory:COMPLETE",
+      "msg": "NSP action level: 20 MU/100 grams (0.8 mg brevetoxin-2 equivalents/kg), measured in shellfish meats."
+    },
+    {
+      "at": 101.62,
+      "clock": "22:38:56",
+      "tag": "regulatory:COMPLETE",
+      "msg": "Numeric cell-count threshold present in the ordinance: False."
+    },
+    {
+      "at": 101.62,
+      "clock": "22:38:56",
+      "tag": "decide:RUNNING",
+      "msg": "Deterministic decision layer. No model in this step."
+    },
+    {
+      "at": 101.62,
+      "clock": "22:38:56",
+      "tag": "decide:COMPLETE",
+      "msg": "The public map reads 'low', every value of which is at or above Florida's 5,000 cells/L closure trigger."
+    },
+    {
+      "at": 101.62,
+      "clock": "22:38:56",
+      "tag": "mapper:RUNNING",
+      "msg": "ADK Runner dispatched to remediation_reporter..."
+    },
+    {
+      "at": 107.01,
+      "clock": "22:39:01",
+      "tag": "mapper:RUNNING",
+      "msg": "tool call: render_incident_map()"
+    },
+    {
+      "at": 109.24,
+      "clock": "22:39:03",
+      "tag": "mapper:RUNNING",
+      "msg": "tool call: write_advisory()"
+    },
+    {
+      "at": 115.43,
+      "clock": "22:39:10",
+      "tag": "mapper:COMPLETE",
+      "msg": "2 tool calls: render_incident_map, write_advisory"
+    }
+  ],
+  "acoustic": {
+    "biological_sounds": [
+      "snapping shrimp crackle"
+    ],
+    "anthropogenic_sounds": [
+      "vessel engine"
+    ],
+    "dominant_character": "The recording is dominated by the continuous, high-frequency crackling of snapping shrimp, with a low-frequency vessel passage audible in the latter half.",
+    "relative_biological_density": "DENSE",
+    "calibration_caveat": "Absolute sound pressure level cannot be derived without the deployment calibration constant, which is not present in this file.",
+    "confidence": "HIGH"
+  },
+  "imagery": {
+    "image_kind": "categorical monitoring map",
+    "legend_categories": [
+      "not present",
+      "very low",
+      "low",
+      "medium",
+      "high"
+    ],
+    "observed_categories": [
+      "not present",
+      "very low",
+      "low"
+    ],
+    "highest_observed_category": "low",
+    "numeric_values_present": false,
+    "numeric_values_shown": [],
+    "spatial_summary": "Samples are plotted along the Florida coastline, with clusters of 'not present' (grey), 'very low' (white), and 'low' (yellow) concentrations observed near Jacksonville on the east coast, around the Tampa Bay and Clearwater areas on the west coast, and along the Panhandle.",
+    "determinability_caveat": "A shellfish harvesting closure decision cannot be made from this image alone because it is a broad-scale public informational map that lacks the precise, localized cell counts and regulatory testing data required by authorities to enforce closures."
+  },
+  "regulatory": {
+    "nsp_action_level": "20 MU/100 grams (0.8 mg brevetoxin-2 equivalents/kg)",
+    "measured_in": "shellfish meats",
+    "cell_count_threshold_present": false,
+    "cell_count_explanation": "The document does not establish a specific numeric cell-count threshold for Karenia brevis or NSP. It states that 'either cell counts of the toxin producing organism in the water column or biotoxin meat concentrations may be used by the Authority as the criteria for not allowing the harvest of shellstock' only '[f]or any marine biotoxin for which criteria have not been established under this Ordinance' (page 70). Since NSP criteria are established, this clause does not apply. Furthermore, the guidance section notes that '[c]ell counts, as measured per liter of water, are often used to trigger additional testing of shellfish in biotoxin monitoring programs' but that '[t]hese cell count criteria can only be established with a robust dataset' (page 359).",
+    "all_biotoxin_criteria": [
+      "PSP - 80 \u00b5g saxitoxin equivalents/100 grams",
+      "NSP - 20 MU/100 grams (0.8 mg brevetoxin-2 equivalents/kg)",
+      "AZP - 0.16 mg azaspiracid-1 (AZA-1) equivalents/kg (0.16 ppm)",
+      "DSP \u2013 0.16 mg okadaic acid (OA) equivalents/kg (0.16 ppm)",
+      "ASP - 2 mg domoic acid/100 grams (20 ppm)"
+    ],
+    "citations": [
+      {
+        "page": 70,
+        "verbatim_quote": "NSP - 20 MU/100 grams (0.8 mg brevetoxin-2 equivalents/kg)",
+        "provision_reference": "Section II Model Ordinance Chapter IV @ .04 C. (1) (b)",
+        "verified": true,
+        "verify_reason": "exact match on page 70"
+      },
+      {
+        "page": 70,
+        "verbatim_quote": "A growing area, or portion(s) thereof, shall be placed in the closed status for the taking of shellstock when the Authority determines that the number of toxin-forming organisms in the growing waters and/or the level of biotoxin present in shellfish meats is sufficient to cause a health risk.",
+        "provision_reference": "Section II Model Ordinance Chapter IV @ .04 C. (1)",
+        "verified": true,
+        "verify_reason": "exact match on page 70"
+      }
+    ],
+    "caveats": "The document does not contain any Florida-specific requirements or any numeric cell-count threshold (such as 5,000 cells per liter) for Karenia brevis or NSP closures."
+  },
+  "assessment": {
+    "headline": "The public map reads 'low', every value of which is at or above Florida's 5,000 cells/L closure trigger.",
+    "map_category": "low",
+    "band_relation": "ABOVE",
+    "band_explanation": "The whole 'low' band starts at 10,000 cells/L, at or above the 5,000 cells/L closure trigger. Every sample in this category is over the trigger.",
+    "federal_criterion": "20 MU/100 grams (0.8 mg brevetoxin-2 equivalents/kg)",
+    "federal_matrix": "shellfish meats",
+    "cell_threshold_in_federal_doc": false,
+    "reconciliation": "Cell counts trigger TESTING. Toxin in meat triggers CLOSURE. Florida's 5,000 cells/L figure is a state operational trigger, not a federal action level: it appears nowhere in the NSSP Guide. The federal criterion is 20 MU/100 grams (0.8 mg brevetoxin-2 equivalents/kg), measured in shellfish meats.",
+    "caveats": [
+      "A category on a public map is not a measurement. No cells-per-litre figure is derived from map colour anywhere in this system."
+    ]
+  },
+  "tool_calls": [
+    "render_incident_map",
+    "write_advisory"
+  ],
+  "artifacts": {
+    "render_incident_map": {
+      "svg": "<svg viewBox=\"0 0 200 130\" role=\"img\" aria-label=\"Florida Karenia brevis monitoring sites\"><rect width=\"200\" height=\"130\" fill=\"#0b1220\"/><path d=\"M 60,18 C 96,14 118,30 122,52 C 126,76 112,100 92,110\" fill=\"none\" stroke=\"#334155\" stroke-width=\"1.5\"/><circle cx=\"131.0\" cy=\"28.0\" r=\"3.2\" fill=\"#eab308\" stroke=\"#0b1220\" stroke-width=\"0.8\"/><text x=\"136.0\" y=\"30.0\" font-size=\"4\" fill=\"#94a3b8\" font-family=\"monospace\">Jacksonville / St Augustine [low]</text><circle cx=\"89.0\" cy=\"40.0\" r=\"3.2\" fill=\"#6b7280\" stroke=\"#0b1220\" stroke-width=\"0.8\"/><text x=\"94.0\" y=\"42.0\" font-size=\"4\" fill=\"#94a3b8\" font-family=\"monospace\">Big Bend [not present]</text><circle cx=\"98.0\" cy=\"62.0\" r=\"3.2\" fill=\"#eab308\" stroke=\"#0b1220\" stroke-width=\"0.8\"/><text x=\"103.0\" y=\"64.0\" font-size=\"4\" fill=\"#94a3b8\" font-family=\"monospace\">Tampa Bay / Clearwater [low]</text><circle cx=\"140.0\" cy=\"72.0\" r=\"3.2\" fill=\"#6b7280\" stroke=\"#0b1220\" stroke-width=\"0.8\"/><text x=\"145.0\" y=\"74.0\" font-size=\"4\" fill=\"#94a3b8\" font-family=\"monospace\">Port St Lucie [not present]</text><text x=\"10\" y=\"124\" font-size=\"4.6\" fill=\"#e2e8f0\" font-family=\"monospace\">The public map reads &#x27;low&#x27;, every value of which is at or above Florida&#x27;s 5,000 cells/L </text><text x=\"10\" y=\"10\" font-size=\"4\" fill=\"#64748b\" font-family=\"monospace\">SCHEMATIC. Site categories only, not a georeferenced map, no cell counts implied.</text></svg>",
+      "sites_rendered": 4
+    },
+    "write_advisory": {
+      "advisory": "ADVISORY\n\nThe public map reads 'low', every value of which is at or above Florida's 5,000 cells/L closure trigger.\n\nFederal criterion: 20 MU/100 grams (0.8 mg brevetoxin-2 equivalents/kg)\n\nCell counts trigger TESTING. Toxin in meat triggers CLOSURE. Florida's 5,000 cells/L figure is a state operational trigger, not a federal action level: it appears nowhere in the NSSP Guide. The federal criterion is 20 MU/100 grams (0.8 mg brevetoxin-2 equivalents/kg), measured in shellfish meats.\n\nThis advisory is generated from archived public data for demonstration. It is not an official determination. Harvesting area status is set by the Florida Department of Agriculture and Consumer Services, Division of Aquaculture.",
+      "chars": 715
+    }
+  },
+  "verification": {
+    "checked": 2,
+    "passed": 2,
+    "source_document": "FDA NSSP Guide for the Control of Molluscan Shellfish, 2023 Revision",
+    "source_pages": 532,
+    "method": "each quote looked up as an exact substring of the cited PDF page"
+  }
+}

@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Abyssal // marine biosecurity control plane</title>
+<style>
+    :root {
+      --field: #070B10;
+      --surface: #0E141B;
+      --rule: #1A2430;
+      --text: #CBD5E1;
+      --text-muted: #94A3B8;
+      --heading: #E8EEF5;
+      --accent: #38D6E0;
+      --accent-ink: #0E7C88;
+      --state-ok: #3ED598;
+      --state-bad: #FF5E64;
+      --state-warn: #F2BB4F;
+
+  --s1: 4px; --s2: 8px; --s3: 16px; --s4: 24px; --s5: 40px; --s6: 64px;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+html { color-scheme: dark; }
+body {
+  margin: 0; background: var(--field); color: var(--text);
+  font-family: var(--sans); font-size: 16px; line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: var(--s4) var(--s3) var(--s6); }
+
+/* ---------- masthead ---------- */
+header { border-bottom: 1px solid var(--rule); padding-bottom: var(--s3); margin-bottom: var(--s5); }
+.brand { display: flex; align-items: baseline; gap: var(--s3); flex-wrap: wrap; }
+h1 { font-size: 1.25rem; letter-spacing: .16em; text-transform: uppercase;
+     color: var(--heading); margin: 0; font-weight: 600; }
+.sub { color: var(--text-muted); font-size: .84rem; margin: var(--s2) 0 0; max-width: 78ch; }
+.chip {
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .08em;
+  text-transform: uppercase; padding: 3px 9px; border-radius: 3px;
+  border: 1px solid var(--rule); color: var(--text-muted); white-space: nowrap;
+}
+.chip.rec { border-color: var(--state-warn); color: var(--state-warn); }
+
+/* ---------- the evidence bar. first five seconds. ---------- */
+.evidence {
+  border: 1px solid var(--rule); border-left: 3px solid var(--state-ok);
+  background: var(--surface); padding: var(--s3) var(--s4);
+  margin-bottom: var(--s5); border-radius: 4px;
+}
+.evidence h2 {
+  font-size: .7rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--text-muted); margin: 0 0 var(--s3); font-weight: 600;
+}
+.cite { display: grid; grid-template-columns: auto 1fr; gap: var(--s2) var(--s3);
+        align-items: start; margin-bottom: var(--s3); }
+.cite:last-of-type { margin-bottom: 0; }
+.verdict-tag {
+  font-family: var(--mono); font-size: .72rem; font-weight: 700; letter-spacing: .06em;
+  padding: 2px 8px; border-radius: 3px; white-space: nowrap;
+}
+.verdict-tag.pass { color: var(--state-ok); border: 1px solid var(--state-ok); }
+.verdict-tag.fail { color: var(--state-bad); border: 1px solid var(--state-bad); }
+blockquote { margin: 0; font-family: var(--mono); font-size: .82rem;
+             color: var(--heading); line-height: 1.5; }
+.cite-meta { font-size: .74rem; color: var(--text-muted); margin-top: var(--s1); }
+
+/* ---------- THE SIGNATURE ELEMENT: the band ruler ---------- */
+.ruler-block { margin-bottom: var(--s5); }
+.ruler-block h2, .panel h2 {
+  font-size: .7rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--text-muted); margin: 0 0 var(--s3); font-weight: 600;
+}
+.ruler { position: relative; margin: var(--s5) 0 var(--s4); }
+.bands { display: flex; height: 46px; border: 1px solid var(--rule); border-radius: 3px;
+         overflow: hidden; }
+.band { position: relative; display: flex; align-items: center; justify-content: center;
+        border-right: 1px solid var(--rule); font-size: .7rem; color: var(--text-muted);
+        text-align: center; padding: 0 var(--s1); }
+.band:last-child { border-right: 0; }
+.band.straddles { background: rgba(56,214,224,.09); color: var(--heading); }
+.band-range { display: block; font-family: var(--mono); font-size: .62rem;
+              color: var(--text-muted); margin-top: 2px; }
+.trigger { position: absolute; top: -10px; bottom: -8px; width: 2px;
+           background: var(--accent); }
+.trigger::before {
+  content: ""; position: absolute; top: -4px; left: -3px; width: 8px; height: 8px;
+  background: var(--accent); border-radius: 50%;
+}
+.trigger-label {
+  position: absolute; top: -34px; transform: translateX(-50%);
+  font-family: var(--mono); font-size: .68rem; color: var(--accent);
+  white-space: nowrap; font-weight: 600; text-align: center;
+}
+.ruler { padding-top: 12px; }
+.ruler-read { font-size: .9rem; color: var(--text); max-width: 88ch; }
+.ruler-read strong { color: var(--heading); }
+
+/* ---------- layout ---------- */
+.cols { display: grid; grid-template-columns: 1fr; gap: var(--s4); }
+@media (min-width: 900px) { .cols { grid-template-columns: 320px minmax(0, 1fr); } }
+/* A grid track is min-width:auto by default, so one long unbreakable mono line
+   in the trace pushed the column past the viewport and the panel ran off the
+   right edge. Caught by looking at it in a browser, not by any test. */
+.cols > * { min-width: 0; }
+body { overflow-x: hidden; }
+.panel { background: var(--surface); border: 1px solid var(--rule);
+         border-radius: 4px; padding: var(--s3) var(--s4) var(--s4); }
+
+/* ---------- agent fleet ---------- */
+.node { display: flex; align-items: center; justify-content: space-between;
+        gap: var(--s2); padding: 10px 12px; border: 1px solid var(--rule);
+        border-radius: 3px; margin-bottom: var(--s2); font-size: .8rem;
+        min-height: 44px; }
+.node[data-state="RUNNING"] { border-color: var(--state-warn); }
+.node[data-state="COMPLETE"] { border-color: var(--state-ok); }
+.node-name { color: var(--text); }
+.node-name .fn { font-family: var(--mono); font-size: .68rem; color: var(--text-muted);
+                 display: block; }
+.node-state { font-family: var(--mono); font-size: .68rem; font-weight: 700;
+              letter-spacing: .06em; color: var(--text-muted); white-space: nowrap; }
+.node[data-state="RUNNING"] .node-state { color: var(--state-warn); }
+.node[data-state="COMPLETE"] .node-state { color: var(--state-ok); }
+/* meaning is never carried by color alone */
+.node-state::before { content: "\00b7 "; }
+.node[data-state="RUNNING"] .node-state::before { content: "\25b8 "; }
+.node[data-state="COMPLETE"] .node-state::before { content: "\2713 "; }
+
+/* ---------- trace ---------- */
+.trace {
+  background: #04070A; border: 1px solid var(--rule); border-radius: 3px;
+  font-family: var(--mono); font-size: .76rem; line-height: 1.7;
+  padding: var(--s3); height: 340px; overflow-y: auto;
+}
+.trace-row { display: flex; gap: var(--s3); }
+.trace-t { color: var(--accent-ink); flex: 0 0 auto; }
+.trace-tag { color: var(--text-muted); flex: 0 0 11ch; }
+.trace-msg { color: var(--text); min-width: 0; overflow-wrap: anywhere; }
+.trace .empty { overflow-wrap: anywhere; }
+.trace-row.done .trace-msg { color: var(--state-ok); }
+.trace-row.decide .trace-msg { color: var(--heading); font-weight: 600; }
+.empty { color: var(--text-muted); font-style: normal; }
+.err { color: var(--state-bad); }
+
+/* ---------- verdict ---------- */
+.verdict { border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+           background: var(--surface); border-radius: 4px;
+           padding: var(--s3) var(--s4); margin-top: var(--s4); }
+.verdict p.head { font-size: 1.05rem; color: var(--heading); margin: 0 0 var(--s2);
+                  line-height: 1.45; }
+.verdict p { font-size: .85rem; margin: 0 0 var(--s2); }
+.verdict p:last-child { margin-bottom: 0; }
+dl.facts { display: grid; grid-template-columns: auto 1fr; gap: var(--s1) var(--s3);
+           font-size: .8rem; margin: var(--s3) 0 0; }
+dt { color: var(--text-muted); }
+dd { margin: 0; font-family: var(--mono); color: var(--heading); font-size: .78rem; }
+
+.controls { display: flex; gap: var(--s2); flex-wrap: wrap; margin-bottom: var(--s3); }
+button {
+  font: inherit; font-size: .78rem; background: transparent; color: var(--text);
+  border: 1px solid var(--rule); border-radius: 3px; padding: 9px 16px;
+  cursor: pointer; min-height: 44px;
+}
+button:hover { border-color: var(--accent); color: var(--heading); }
+button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+
+footer { margin-top: var(--s6); padding-top: var(--s3); border-top: 1px solid var(--rule);
+         font-size: .74rem; color: var(--text-muted); }
+footer a { color: var(--text-muted); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* Narrow viewports. Measured at a simulated 375px: the five ruler bands
+   compress to 68px each, and "not present" plus its range wraps to three lines
+   against a fixed 46px band, which clips. Give the bands room and shrink the
+   type rather than letting the signature element lose its labels on a phone. */
+@media (max-width: 700px) {
+  .bands { height: auto; min-height: 46px; }
+  .band { font-size: .62rem; padding: 6px 3px; line-height: 1.25; }
+  .band-range { font-size: .55rem; }
+  .trigger-label { font-size: .6rem; }
+  .cite { grid-template-columns: 1fr; }
+  blockquote { font-size: .74rem; }
+  .trace { height: 260px; font-size: .68rem; }
+  .trace-tag { flex-basis: 8ch; }
+  .wrap { padding-left: var(--s3); padding-right: var(--s3); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* reduce, not kill: transitions shorten, nothing is removed */
+  * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <h1>Abyssal</h1>
+      <span class="chip" id="chip-model">gemini-3.5-flash</span>
+      <span class="chip">google adk</span>
+      <span class="chip rec" id="chip-mode">recorded run</span>
+    </div>
+    <p class="sub">
+      Four agents over real public data: a NOAA hydrophone recording from the Florida Keys,
+      NOAA and NASA bloom imagery, and the 532-page FDA shellfish ordinance.
+      It reports where the public red tide map and the closure regulation disagree.
+    </p>
+  </header>
+
+  <!-- FIRST FIVE SECONDS: evidence, not a headline -->
+  <section class="evidence" aria-labelledby="ev-h">
+    <h2 id="ev-h">Citations checked against the source document, not taken on trust</h2>
+    <div id="citations"><p class="empty">Loading the recorded transcript.</p></div>
+    <p class="cite-meta" id="verify-meta"></p>
+  </section>
+
+  <!-- SIGNATURE ELEMENT -->
+  <section class="ruler-block" aria-labelledby="ru-h">
+    <h2 id="ru-h">Published map categories against the closure trigger</h2>
+    <div class="ruler" id="ruler">
+      <div class="bands" id="bands"></div>
+    </div>
+    <p class="ruler-read" id="ruler-read"></p>
+  </section>
+
+  <div class="cols">
+    <div>
+      <section class="panel" aria-labelledby="fleet-h">
+        <h2 id="fleet-h">Agent fleet</h2>
+        <div class="node" data-state="PENDING" id="node-sonar">
+          <span class="node-name">Acoustic<span class="fn">acoustic_auditor</span></span>
+          <span class="node-state">PENDING</span>
+        </div>
+        <div class="node" data-state="PENDING" id="node-vision">
+          <span class="node-name">Imagery<span class="fn">imagery_inspector</span></span>
+          <span class="node-state">PENDING</span>
+        </div>
+        <div class="node" data-state="PENDING" id="node-regulatory">
+          <span class="node-name">Regulatory<span class="fn">regulatory_ombudsman</span></span>
+          <span class="node-state">PENDING</span>
+        </div>
+        <div class="node" data-state="PENDING" id="node-decide">
+          <span class="node-name">Decision<span class="fn">core.synthesis, no model</span></span>
+          <span class="node-state">PENDING</span>
+        </div>
+        <div class="node" data-state="PENDING" id="node-mapper">
+          <span class="node-name">Report<span class="fn">remediation_reporter</span></span>
+          <span class="node-state">PENDING</span>
+        </div>
+      </section>
+    </div>
+
+    <div>
+      <section class="panel" aria-labelledby="tr-h">
+        <h2 id="tr-h">Execution trace</h2>
+        <div class="controls">
+          <button id="btn-play" type="button">Replay run</button>
+          <button id="btn-speed" type="button" aria-pressed="true">Speed 8x</button>
+        </div>
+        <div class="trace" id="trace" role="log" aria-live="polite" aria-relevant="additions">
+          <p class="empty">Press Replay run. Timings below are the real elapsed
+          seconds from the recorded run, not invented pacing.</p>
+        </div>
+      </section>
+
+      <div class="verdict" id="verdict" hidden>
+        <p class="head" id="v-head"></p>
+        <p id="v-why"></p>
+        <p id="v-recon"></p>
+        <dl class="facts">
+          <dt>Federal criterion</dt><dd id="v-crit"></dd>
+          <dt>Measured in</dt><dd id="v-matrix"></dd>
+          <dt>Cell threshold in the ordinance</dt><dd id="v-cellthr"></dd>
+          <dt>Tool calls made</dt><dd id="v-tools"></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p><strong>This console replays a recorded real run.</strong> A live run makes real
+    Gemini calls, reads a 532-page document and costs about $0.42. This URL is
+    unauthenticated, so it is keyless by design and cannot spend money. The live path is
+    <code>agents/pipeline.py</code> and <code>scripts/record_run.py</code> in the repo, and
+    it produced the transcript shown here.</p>
+    <p>Source data is US Government public domain: NOAA and U.S. Navy SanctSound
+    (doi 10.25921/saca-sp25), NOAA NCCOS HAB Operational Forecast, NASA MODIS,
+    FDA and ISSC NSSP Guide 2023 Revision, and Florida FWC red tide status data.
+    Not an official determination. Harvesting area status is set by the Florida
+    Department of Agriculture and Consumer Services, Division of Aquaculture.</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var run = null, speed = 8, timers = [];
+
+  function text(el, s) { el.textContent = s == null ? "" : String(s); }
+
+  function fail(msg) {
+    var t = $("trace");
+    t.innerHTML = "";
+    var p = document.createElement("p");
+    p.className = "err";
+    p.textContent = msg;
+    t.appendChild(p);
+  }
+
+  // ---- the signature element -----------------------------------------------
+  function drawRuler(data) {
+    var bands = $("bands");
+    bands.innerHTML = "";
+    data.segments.forEach(function (s) {
+      var d = document.createElement("div");
+      d.className = "band" + (s.relation === "STRADDLES" ? " straddles" : "");
+      d.style.width = s.width_pct + "%";
+      var name = document.createElement("span");
+      name.textContent = s.category;
+      var rng = document.createElement("span");
+      rng.className = "band-range";
+      rng.textContent = s.high === null
+        ? "over " + s.low.toLocaleString()
+        : s.low.toLocaleString() + " to " + s.high.toLocaleString();
+      var box = document.createElement("div");
+      box.appendChild(name); box.appendChild(rng);
+      d.appendChild(box);
+      bands.appendChild(d);
+    });
+
+    var line = document.createElement("div");
+    line.className = "trigger";
+    line.style.left = data.trigger_pct + "%";
+    $("ruler").appendChild(line);
+
+    var lab = document.createElement("div");
+    lab.className = "trigger-label";
+    lab.style.left = data.trigger_pct + "%";
+    lab.textContent = data.trigger_cells_per_l.toLocaleString() + " cells/L closure trigger";
+    $("ruler").appendChild(lab);
+
+    var straddling = data.segments.filter(function (s) { return s.relation === "STRADDLES"; });
+    var read = $("ruler-read");
+    read.innerHTML = "";
+    var strong = document.createElement("strong");
+    strong.textContent = "The trigger lands inside a published category, not between two.";
+    read.appendChild(strong);
+    read.appendChild(document.createTextNode(
+      " Florida closes shellfish harvesting at or above " +
+      data.trigger_cells_per_l.toLocaleString() + " cells per liter. That value falls " +
+      "within the " + (straddling[0] ? "“" + straddling[0].category + "”" : "") +
+      " band, so a sample shown in that category on the public map may sit either " +
+      "side of the trigger. The category alone cannot tell you whether an area is closed."
+    ));
+  }
+
+  // ---- evidence -------------------------------------------------------------
+  function drawCitations(d) {
+    var host = $("citations");
+    host.innerHTML = "";
+    var cites = (d.regulatory && d.regulatory.citations) || [];
+    if (!cites.length) {
+      var p = document.createElement("p");
+      p.className = "empty";
+      p.textContent = "No citations in this transcript.";
+      host.appendChild(p);
+      return;
+    }
+    cites.forEach(function (c) {
+      var row = document.createElement("div");
+      row.className = "cite";
+      var tag = document.createElement("span");
+      tag.className = "verdict-tag " + (c.verified ? "pass" : "fail");
+      tag.textContent = c.verified ? "VERIFIED p." + c.page : "UNVERIFIED p." + c.page;
+      var body = document.createElement("div");
+      var q = document.createElement("blockquote");
+      q.textContent = "“" + c.verbatim_quote + "”";
+      var m = document.createElement("div");
+      m.className = "cite-meta";
+      m.textContent = c.provision_reference + " · " + (c.verify_reason || "");
+      body.appendChild(q); body.appendChild(m);
+      row.appendChild(tag); row.appendChild(body);
+      host.appendChild(row);
+    });
+    var v = d.verification;
+    if (v) {
+      text($("verify-meta"),
+        v.passed + " of " + v.checked + " quotes located as exact substrings of the cited " +
+        "page in " + v.source_document + ", " + v.source_pages + " pages. Method: " + v.method + ".");
+    }
+  }
+
+  // ---- replay ---------------------------------------------------------------
+  var NODE_OF = { sonar: "sonar", vision: "vision", regulatory: "regulatory",
+                  decide: "decide", mapper: "mapper" };
+
+  function setNode(stage, state) {
+    var el = $("node-" + NODE_OF[stage]);
+    if (!el) { return; }
+    el.setAttribute("data-state", state);
+    el.querySelector(".node-state").textContent = state;
+  }
+
+  function resetNodes() {
+    Object.keys(NODE_OF).forEach(function (s) { setNode(s, "PENDING"); });
+  }
+
+  function addRow(r) {
+    var stage = r.tag.split(":")[0];
+    var level = r.tag.split(":")[1] || "";
+    var row = document.createElement("div");
+    row.className = "trace-row" + (level === "COMPLETE" ? " done" : "") +
+                    (stage === "decide" ? " decide" : "");
+    var t = document.createElement("span");
+    t.className = "trace-t";
+    t.textContent = "+" + r.at.toFixed(2) + "s";
+    var tag = document.createElement("span");
+    tag.className = "trace-tag";
+    tag.textContent = stage;
+    var m = document.createElement("span");
+    m.className = "trace-msg";
+    m.textContent = r.msg;
+    row.appendChild(t); row.appendChild(tag); row.appendChild(m);
+    var host = $("trace");
+    host.appendChild(row);
+    host.scrollTop = host.scrollHeight;
+    setNode(stage, level === "COMPLETE" ? "COMPLETE" : "RUNNING");
+  }
+
+  function showVerdict(d) {
+    var a = d.assessment || {};
+    text($("v-head"), a.headline);
+    text($("v-why"), a.band_explanation);
+    text($("v-recon"), a.reconciliation);
+    text($("v-crit"), a.federal_criterion);
+    text($("v-matrix"), a.federal_matrix);
+    text($("v-cellthr"), a.cell_threshold_in_federal_doc ? "present" : "absent, 0 occurrences");
+    text($("v-tools"), (d.tool_calls || []).join(", ") || "none");
+    $("verdict").hidden = false;
+  }
+
+  function replay() {
+    if (!run) { return; }
+    timers.forEach(clearTimeout);
+    timers = [];
+    $("trace").innerHTML = "";
+    $("verdict").hidden = true;
+    resetNodes();
+    var rows = run.trace || [];
+    rows.forEach(function (r) {
+      timers.push(setTimeout(function () { addRow(r); }, (r.at * 1000) / speed));
+    });
+    var last = rows.length ? rows[rows.length - 1].at : 0;
+    timers.push(setTimeout(function () { showVerdict(run); }, (last * 1000) / speed + 120));
+  }
+
+  // ---- boot -----------------------------------------------------------------
+  $("btn-play").addEventListener("click", replay);
+  $("btn-speed").addEventListener("click", function () {
+    speed = speed === 8 ? 1 : 8;
+    this.textContent = "Speed " + speed + "x";
+    this.setAttribute("aria-pressed", speed === 8 ? "true" : "false");
+  });
+
+  fetch("api/bands").then(function (r) {
+    if (!r.ok) { throw new Error("bands"); }
+    return r.json();
+  }).then(drawRuler).catch(function () {
+    text($("ruler-read"), "Band data unavailable. The ruler cannot be drawn from stale values, so it is not drawn.");
+  });
+
+  fetch("api/run").then(function (r) {
+    if (!r.ok) { throw new Error("run"); }
+    return r.json();
+  }).then(function (d) {
+    run = d;
+    drawCitations(d);
+    text($("chip-model"), d.model || "gemini-3.5-flash");
+    text($("chip-mode"), "recorded " + (d.recorded_utc || "") + " · " +
+                         (d.wall_seconds || "?") + "s real");
+  }).catch(function () {
+    $("citations").innerHTML = "";
+    var p = document.createElement("p");
+    p.className = "err";
+    p.textContent = "No recorded run is available on this instance. Nothing is shown rather than showing something invented.";
+    $("citations").appendChild(p);
+    fail("Transcript unavailable.");
+  });
+})();
+</script>
+</body>
+</html>

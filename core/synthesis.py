@@ -145,3 +145,46 @@ def synthesise(*, map_category: str, cell_threshold_in_federal_doc: bool,
         reconciliation=reconciliation,
         caveats=caveats,
     )
+
+
+# --- the band ruler geometry -------------------------------------------------
+# The signature element. Its position is COMPUTED, not eyeballed, so the graphic
+# cannot drift away from the numbers it claims to represent.
+#
+# The bands are decades (1k, 10k, 100k, 1M), so the axis is logarithmic and each
+# band is one equal segment. The trigger line's position inside its own band is
+# the log-interpolated fraction, which is what makes "it lands inside very low"
+# a measured statement rather than a drawing decision.
+import math
+
+RULER_ORDER = ["not present", "very low", "low", "medium", "high"]
+
+
+def ruler_segments() -> list[dict]:
+    n = len(RULER_ORDER)
+    out = []
+    for i, cat in enumerate(RULER_ORDER):
+        lo, hi = FWC_BANDS[cat]
+        out.append({
+            "category": cat,
+            "low": lo,
+            "high": hi,
+            "start_pct": round(i * 100 / n, 4),
+            "width_pct": round(100 / n, 4),
+            "relation": assess_band(cat).relation,
+        })
+    return out
+
+
+def trigger_position_pct() -> float:
+    """Where the 5,000 cells/L line falls across the whole ruler, in percent."""
+    n = len(RULER_ORDER)
+    for i, cat in enumerate(RULER_ORDER):
+        lo, hi = FWC_BANDS[cat]
+        if hi is not None and lo <= FL_CLOSURE_TRIGGER_CELLS_PER_L <= hi:
+            span_lo = math.log10(max(lo, 1))
+            span_hi = math.log10(hi)
+            frac = ((math.log10(FL_CLOSURE_TRIGGER_CELLS_PER_L) - span_lo)
+                    / (span_hi - span_lo))
+            return round((i + frac) * 100 / n, 4)
+    raise ValueError("trigger falls in no published band")
