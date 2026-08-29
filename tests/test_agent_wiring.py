@@ -120,3 +120,132 @@ def test_truncation_error_type_exists_and_is_distinct():
     from agents.definitions import TruncatedOutputError
     assert issubclass(TruncatedOutputError, RuntimeError)
     assert not issubclass(TruncatedOutputError, ValueError)
+
+
+# --- the generated SVG is a render boundary, so it gets boundary tests --------
+
+def test_generated_svg_carries_no_script_or_event_handlers():
+    """The console injects this into the DOM. The tool escapes its inputs, but
+    'our own code made it' is the assumption that stops being true one refactor
+    later, so assert it here AND scrub it in the page."""
+    import re
+    svg = render_incident_map("verdict line")["svg"]
+    low = svg.lower()
+    assert "<script" not in low
+    assert "foreignobject" not in low
+    assert "javascript:" not in low
+    assert not re.search(r"\son[a-z]+\s*=", low), "event handler attribute in generated SVG"
+
+
+def test_generated_svg_escapes_a_hostile_headline_end_to_end():
+    bad = '"><script>fetch("//evil")</script><text x="0'
+    svg = render_incident_map(bad)["svg"]
+    assert "<script" not in svg.lower()
+    assert "&lt;script&gt;" in svg
+
+
+def test_advisory_never_contains_an_em_dash():
+    """Judged surface. The previous build failed its own build on one."""
+    r = write_advisory("h", "20 MU/100 grams", "cell counts trigger testing")
+    assert "—" not in r["advisory"]
+
+
+def test_generated_svg_declares_the_svg_namespace():
+    """Without xmlns the markup is still 'valid' and still renders inline in
+    HTML, because the HTML parser infers the namespace. It then parses into the
+    NULL namespace through DOMParser and the browser lays the whole diagram out
+    as flowing text. A silent visual failure that no string assertion about the
+    SVG's content would have caught."""
+    svg = render_incident_map("x")["svg"]
+    assert 'xmlns="http://www.w3.org/2000/svg"' in svg
+
+
+def test_generated_svg_is_parseable_as_xml():
+    """If it does not parse as XML it will not survive DOMParser either."""
+    import xml.etree.ElementTree as ET
+    root = ET.fromstring(render_incident_map("verdict")["svg"])
+    assert root.tag == "{http://www.w3.org/2000/svg}svg"
+    circles = root.findall(".//{http://www.w3.org/2000/svg}circle")
+    assert len(circles) == 4, "one marker per monitoring site"
+
+
+# --- clipping is invisible, so it gets an invariant ---------------------------
+
+def _text_elements(svg: str):
+    """(x, anchor, font_size, content) for every <text> in the markup."""
+    import xml.etree.ElementTree as ET
+    NS = "{http://www.w3.org/2000/svg}"
+    root = ET.fromstring(svg)
+    out = []
+    for t in root.findall(f".//{NS}text"):
+        out.append((
+            float(t.get("x")),
+            t.get("text-anchor", "start"),
+            float(t.get("font-size")),
+            "".join(t.itertext()),
+        ))
+    return out
+
+
+def test_no_text_overruns_the_viewbox():
+    """The first version clipped 'Jacksonville / St Augustine [low]' and the
+    headline, silently: no error, no warning, just a truncated word that only a
+    careful reader notices. Monospace advances at about 0.6 em, so the extent is
+    computable and the invariant is assertable."""
+    from agents.tools import VIEW_W, MONO_ADVANCE
+    svg = render_incident_map(
+        "The public map reads 'low', every value of which is at or above "
+        "Florida's 5,000 cells/L closure trigger.")["svg"]
+    for x, anchor, size, content in _text_elements(svg):
+        extent = len(content) * size * MONO_ADVANCE
+        left = x - extent if anchor == "end" else x
+        right = x if anchor == "end" else x + extent
+        assert left >= -0.5, f"text starts off-canvas at {left:.1f}: {content[:40]!r}"
+        assert right <= VIEW_W + 0.5, (
+            f"text overruns viewBox width {VIEW_W} to {right:.1f}: {content[:40]!r}")
+
+
+def test_label_flips_only_when_it_would_otherwise_clip():
+    """Tests the BRANCH, not the data. The first version of this test asserted
+    that the current four sites trigger the flip; they do not on the widened
+    canvas, so it failed and correctly exposed the flip as dead code for this
+    input. A test that needs the data to reach a branch stops testing the branch
+    the day the data moves."""
+    from agents.tools import label_anchor, VIEW_W
+    anchor, x = label_anchor(10.0, "Site A [low]")
+    assert anchor == "start" and x == 15.0
+    anchor, x = label_anchor(VIEW_W - 4, "A very long site label [not present]")
+    assert anchor == "end" and x == VIEW_W - 9
+    # exactly-fits stays on the right
+    from agents.tools import LABEL_PT, MONO_ADVANCE
+    label = "abc"
+    just_fits = VIEW_W - 5 - len(label) * LABEL_PT * MONO_ADVANCE
+    assert label_anchor(just_fits, label)[0] == "start"
+
+
+def test_every_real_site_label_stays_on_canvas():
+    """The invariant that actually matters, over the real site table."""
+    from agents.tools import VIEW_W, MONO_ADVANCE
+    svg = render_incident_map("x")["svg"]
+    for x, anchor, size, content in _text_elements(svg):
+        if "[" not in content:
+            continue
+        extent = len(content) * size * MONO_ADVANCE
+        right = x if anchor == "end" else x + extent
+        assert right <= VIEW_W + 0.5, content
+
+
+def test_a_very_long_headline_is_ellipsised_not_overflowed():
+    long = "word " * 200
+    svg = render_incident_map(long)["svg"]
+    from agents.tools import VIEW_W, MONO_ADVANCE
+    for x, anchor, size, content in _text_elements(svg):
+        assert x + len(content) * size * MONO_ADVANCE <= VIEW_W + 0.5
+    assert "..." in svg
+
+
+def test_wrap_never_returns_more_than_max_lines():
+    from agents.tools import _wrap
+    assert len(_wrap("a " * 500, 40, 2)) <= 2
+    assert _wrap("short", 40, 2) == ["short"]
+    assert _wrap("", 40, 2) == []

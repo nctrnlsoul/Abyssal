@@ -45,6 +45,10 @@ app = FastAPI(title="Abyssal", docs_url=None, redoc_url=None, openapi_url=None)
 _HERE = Path(__file__).parent
 _ROOT = _HERE.parent
 _PAGE = (_HERE / "index.html").read_text(encoding="utf-8")
+# Read ONCE at import, and the CSP hash is derived from it, so an edited
+# index.html is served stale until the process restarts. uvicorn --reload
+# watches .py files, not .html, so editing the page alone does not reload.
+# Touch this file or restart after any markup change.
 
 _RUN_PATH = _ROOT / "docs" / "recorded-run.json"
 _RUN = json.loads(_RUN_PATH.read_text(encoding="utf-8")) if _RUN_PATH.exists() else {}

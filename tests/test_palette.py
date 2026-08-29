@@ -69,3 +69,25 @@ def test_css_variables_block_covers_every_semantic_token():
     block = css_variables()
     for name in SEMANTIC:
         assert f"--{name}:" in block
+
+
+def test_page_declares_reduced_motion_handling():
+    if not HTML.exists():
+        pytest.skip("console not built yet")
+    t = HTML.read_text(encoding="utf-8")
+    assert "prefers-reduced-motion" in t
+    assert "REDUCED" in t, "no scripted reduced-motion branch for the streaming trace"
+
+
+def test_page_sanitizes_before_injecting_generated_svg():
+    """A render boundary that trusts its input is the defect the previous
+    project shipped. Assert the scrubber exists and that innerHTML is never
+    handed model-adjacent markup."""
+    if not HTML.exists():
+        pytest.skip("console not built yet")
+    t = HTML.read_text(encoding="utf-8")
+    assert "safeSvg" in t
+    assert "DOMParser" in t
+    assert "importNode" in t
+    assert 'innerHTML = markup' not in t
+    assert '.innerHTML = map.svg' not in t

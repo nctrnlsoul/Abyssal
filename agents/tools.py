@@ -17,6 +17,51 @@ SITES = [
     ("Port St Lucie",               0.80, 0.62, "not present"),
 ]
 
+# Canvas. Monospace advances at roughly 0.6 em, which is what lets
+# tests/test_agent_wiring.py assert nothing overruns the viewBox.
+VIEW_W = 240
+VIEW_H = 118
+LABEL_PT = 4.6
+HEADLINE_PT = 5.0
+MONO_ADVANCE = 0.6
+# Widest line that fits from x=8 to the right margin at HEADLINE_PT.
+HEADLINE_CHARS = int((VIEW_W - 16) / (HEADLINE_PT * MONO_ADVANCE))
+
+
+def label_anchor(cx: float, label: str, view_w: float = None) -> tuple[str, float]:
+    """Decide which side of a marker its label sits on.
+
+    Returns (text-anchor, x). Flips to the left once the label would run past
+    the right edge. Extracted so the flip can be unit tested directly: asserting
+    that the current four sites happen to trigger it would stop testing the
+    branch the day a site moves.
+    """
+    w = VIEW_W if view_w is None else view_w
+    extent = len(label) * LABEL_PT * MONO_ADVANCE
+    if cx + 5 + extent > w:
+        return "end", cx - 5
+    return "start", cx + 5
+
+
+def _wrap(s: str, width: int, max_lines: int) -> list[str]:
+    """Word wrap on a character budget, ellipsising rather than overflowing."""
+    words, lines, cur = s.split(), [], ""
+    for word in words:
+        trial = word if not cur else cur + " " + word
+        if len(trial) <= width:
+            cur = trial
+        else:
+            lines.append(cur)
+            cur = word
+            if len(lines) == max_lines:
+                break
+    if cur and len(lines) < max_lines:
+        lines.append(cur)
+    if len(lines) == max_lines and len(" ".join(lines)) < len(s):
+        lines[-1] = lines[-1][:max(0, width - 3)].rstrip() + "..."
+    return lines
+
+
 _FILL = {
     "not present": "#6b7280",
     "very low":    "#f8fafc",
@@ -34,37 +79,56 @@ def render_incident_map(headline: str) -> dict:
 
     Returns:
         A dict with the SVG markup and the site count.
+
+    Geometry note. The first version used a 200x130 viewBox and placed every
+    label to the RIGHT of its marker at a fixed offset. Labels for right-hand
+    sites, and the headline, ran past the viewBox and were silently clipped by
+    the browser: no error, no warning, just a truncated word. So the canvas is
+    wider now, labels flip to the left of the marker once a site sits in the
+    right third, and the headline wraps on a character budget. The invariant is
+    asserted in tests rather than eyeballed, because clipping is invisible until
+    someone reads the picture carefully.
     """
+    w, h = VIEW_W, VIEW_H
     parts = [
-        '<svg viewBox="0 0 200 130" role="img" '
-        'aria-label="Florida Karenia brevis monitoring sites">',
-        '<rect width="200" height="130" fill="#0b1220"/>',
-        # deliberately schematic. This is a site diagram, not a georeferenced
-        # map, and labelling it otherwise would be the overclaim this project
-        # exists to avoid.
-        '<path d="M 60,18 C 96,14 118,30 122,52 C 126,76 112,100 92,110" '
-        'fill="none" stroke="#334155" stroke-width="1.5"/>',
+        # xmlns is REQUIRED, not decorative. The HTML parser infers the SVG
+        # namespace for a bare <svg>, so omitting it looks fine inline and then
+        # breaks in any XML-namespace-aware consumer: DOMParser parsed this into
+        # the null namespace and the browser rendered the whole diagram as
+        # flowing text. Caught by looking at the page, not by any unit test,
+        # because the string itself was perfectly valid.
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" '
+        f'role="img" aria-label="Florida Karenia brevis monitoring sites">',
+        f'<rect width="{w}" height="{h}" fill="#0b1220"/>',
+        # Schematic on purpose. Calling a site diagram a map is the small
+        # overclaim that becomes a big one.
+        '<path d="M 74,26 C 112,22 136,40 140,64 C 144,90 129,116 108,126" '
+        'fill="none" stroke="#334155" stroke-width="1.6"/>',
+        f'<text x="8" y="12" font-size="4.4" fill="#64748b" '
+        f'font-family="monospace">SCHEMATIC. Site categories only, not a '
+        f'georeferenced map, no cell counts implied.</text>',
     ]
+
     for name, x, y, cat in SITES:
-        cx, cy = 20 + x * 150, 10 + y * 100
+        cx, cy = 18 + x * 120, 26 + y * 74
+        label = f"{name} [{cat}]"
+        anchor, tx = label_anchor(cx, label, w)
         parts.append(
-            f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="3.2" '
+            f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="3.0" '
             f'fill="{_FILL.get(cat, "#94a3b8")}" stroke="#0b1220" stroke-width="0.8"/>'
         )
         parts.append(
-            f'<text x="{cx + 5:.1f}" y="{cy + 2:.1f}" font-size="4" '
-            f'fill="#94a3b8" font-family="monospace">{html.escape(name)} '
-            f'[{html.escape(cat)}]</text>'
+            f'<text x="{tx:.1f}" y="{cy + 1.6:.1f}" font-size="{LABEL_PT}" '
+            f'text-anchor="{anchor}" fill="#94a3b8" font-family="monospace">'
+            f'{html.escape(label)}</text>'
         )
-    parts.append(
-        f'<text x="10" y="124" font-size="4.6" fill="#e2e8f0" '
-        f'font-family="monospace">{html.escape(headline[:88])}</text>'
-    )
-    parts.append(
-        '<text x="10" y="10" font-size="4" fill="#64748b" '
-        'font-family="monospace">SCHEMATIC. Site categories only, not a '
-        'georeferenced map, no cell counts implied.</text>'
-    )
+
+    for i, line in enumerate(_wrap(headline, HEADLINE_CHARS, 2)):
+        parts.append(
+            f'<text x="8" y="{h - 14 + i * 7:.1f}" font-size="{HEADLINE_PT}" '
+            f'fill="#e2e8f0" font-family="monospace">{html.escape(line)}</text>'
+        )
+
     parts.append("</svg>")
     return {"svg": "".join(parts), "sites_rendered": len(SITES)}
 
