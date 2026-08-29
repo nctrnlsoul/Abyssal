@@ -83,3 +83,45 @@ class RegulatoryFinding(BaseModel):
         description="Anything you could not determine from the document. Say so "
                     "plainly rather than filling the gap."
     )
+
+
+class ImageryFinding(BaseModel):
+    """What a public bloom map or satellite capture actually shows.
+
+    Deliberately has no cells_per_litre field. The NOAA public map renders
+    CATEGORIES, not numbers, and inventing a number from a coloured dot is the
+    exact overclaim this project exists to avoid. If the image carries numeric
+    values, they go in numeric_values_shown; if it does not, that list is empty
+    and numeric_values_present is False. That absence is the finding.
+    """
+    image_kind: str = Field(
+        description="What this image is: a categorical monitoring map, a true-colour "
+                    "satellite capture, a chart, or something else."
+    )
+    legend_categories: list[str] = Field(
+        description="Every category label in the legend, in the order shown. "
+                    "Empty list if the image has no legend."
+    )
+    observed_categories: list[str] = Field(
+        description="Which of those categories actually appear as plotted samples "
+                    "in the image. Do not list a category you cannot see plotted."
+    )
+    highest_observed_category: str = Field(
+        description="The most severe category actually plotted, using the legend's "
+                    "own wording. 'none' if nothing is plotted."
+    )
+    numeric_values_present: bool = Field(
+        description="True only if the image displays actual numeric concentration "
+                    "values. A coloured category dot is NOT a numeric value."
+    )
+    numeric_values_shown: list[str] = Field(
+        description="Any numeric concentration values legible in the image, verbatim. "
+                    "Empty if none."
+    )
+    spatial_summary: str = Field(
+        description="One or two sentences on where samples appear geographically."
+    )
+    determinability_caveat: str = Field(
+        description="State whether a harvesting closure decision could be made from "
+                    "this image alone, and why or why not."
+    )
