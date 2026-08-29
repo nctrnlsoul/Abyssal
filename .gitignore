@@ -1,0 +1,33 @@
+# Secrets. Nothing here should ever exist, but fail closed rather than trust that.
+.env
+.env.*
+*.key
+*.pem
+service-account*.json
+credentials*.json
+
+# Raw source data. Reproducible via scripts/fetch_data.ps1, so it does not
+# belong in git. The SanctSound FLAC alone is 78 MB, which is past GitHub's
+# warning threshold and would bloat every clone for no reason.
+data/*.flac
+data/*.pdf
+data/*.jpg
+data/*.png
+
+# Derived clips ARE committed: 1.9 MB each, and they are what the pipeline
+# actually reads, so a judge cloning the repo can run the demo without a
+# 78 MB download. See the negation below.
+!data/reef_window_*.wav
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+
+# Local
+.DS_Store
+Thumbs.db
+*.log

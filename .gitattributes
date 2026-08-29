@@ -1,0 +1,9 @@
+# The pre-commit hook on the previous build was checked out with CRLF and
+# failed with "can't open file 'check.py\r'", so it had never run once.
+# Force LF on anything executable.
+*.py text eol=lf
+*.sh text eol=lf
+.githooks/* text eol=lf
+*.ps1 text eol=crlf
+*.wav binary
+*.flac binary
