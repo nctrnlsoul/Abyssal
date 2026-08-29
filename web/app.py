@@ -40,6 +40,7 @@ from core.synthesis import (
     FL_CLOSURE_TRIGGER_CELLS_PER_L, ruler_segments, trigger_position_pct,
 )
 from core.waveform import envelope
+from core.sites import POSITIONING_NOTE, SITES_ON_IMAGE
 
 app = FastAPI(title="Abyssal", docs_url=None, redoc_url=None, openapi_url=None)
 
@@ -303,6 +304,22 @@ def source_image() -> Response:
 # /healthz would report the service down while it is perfectly healthy. This
 # also explains the identical symptom on the previous project, which was
 # wrongly attributed there to a stale revision.
+@app.get("/api/sites")
+def sites() -> JSONResponse:
+    """The imagery agent's reading, positioned on the frame it read.
+
+    Positions are approximate by design and the payload says so; the page
+    prints the same caveat next to the markers. The categories are the same
+    verified reading the schematic renderer uses, and a test pins the two
+    tables together.
+    """
+    return _json({
+        "sites": SITES_ON_IMAGE,
+        "positioning": POSITIONING_NOTE,
+        "image": "api/source-image",
+    }, 200)
+
+
 @app.get("/health")
 def health() -> dict:
     return {"ok": True}

@@ -172,7 +172,7 @@ body { overflow-x: hidden; }
    actually moves between the node positions the page already knows, rather
    than as decoration that fires on a timer of its own. */
 .tl-packet {
-  position: absolute; left: 3.5px; top: 0; width: 7px; height: 7px;
+  position: absolute; left: 0; top: 0; width: 7px; height: 7px;
   border-radius: 50%; background: var(--accent);
   box-shadow: 0 0 10px rgba(56,214,224,.9); opacity: 0;
   transition: transform .5s cubic-bezier(.22,.61,.36,1), opacity .25s linear;
@@ -251,6 +251,35 @@ body { overflow-x: hidden; }
 .tl-state::before { content: "\00b7 "; }
 .tl-node[data-state="RUNNING"] .tl-state::before { content: "\25b8 "; }
 .tl-node[data-state="COMPLETE"] .tl-state::before { content: "\2713 "; }
+
+/* ---------- the reading, overlaid on the frame it was read from ---------- */
+.map-wrap { position: relative; }
+.map-wrap img { width: 100%; height: auto; display: block;
+  border: 1px solid var(--rule); border-radius: 3px; }
+.site-layer { position: absolute; inset: 0; pointer-events: none; }
+.site-mark { position: absolute; transform: translate(-50%, -50%);
+  animation: markIn .45s cubic-bezier(.22,.61,.36,1) both; }
+@keyframes markIn { from { opacity: 0; transform: translate(-50%,-50%) scale(.4); }
+                    to   { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
+.site-dot { display: block; width: 11px; height: 11px; border-radius: 50%;
+  border: 2px solid #04070A; box-shadow: 0 0 8px rgba(0,0,0,.6); }
+.site-mark.cat-low .site-dot { background: #eab308; box-shadow: 0 0 10px rgba(234,179,8,.8); }
+.site-mark.cat-none .site-dot { background: #6b7280; }
+.site-ring { position: absolute; left: 50%; top: 50%; width: 11px; height: 11px;
+  margin: -5.5px 0 0 -5.5px; border-radius: 50%; border: 2px solid #eab308; }
+.site-mark.cat-low .site-ring { animation: sitePing 2.4s cubic-bezier(.22,.61,.36,1) infinite; }
+@keyframes sitePing {
+  0%   { transform: scale(1);   opacity: .9; }
+  75%  { transform: scale(3.6); opacity: 0; }
+  100% { transform: scale(3.6); opacity: 0; }
+}
+.site-label { position: absolute; left: 14px; top: -7px; white-space: nowrap;
+  font-family: var(--mono); font-size: .66rem; color: var(--heading);
+  background: rgba(4,7,10,.85); border: 1px solid var(--rule);
+  padding: 1px 6px; border-radius: 2px; }
+.site-mark.flip .site-label { left: auto; right: 14px; }
+.tool-pane { margin-top: var(--s3); }
+.tool-pane #artifact-svg { max-width: 380px; }
 
 /* ---------- dual pane: what the agent read, next to what it made ---------- */
 .panes { display: grid; grid-template-columns: 1fr; gap: var(--s3); }
@@ -493,6 +522,8 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
   .ring .tick-mark { stroke-dashoffset: 0; animation: none; }
   .tl-packet { transition: none; opacity: 0 !important; }
   .artifact svg path[stroke="#5b7d8c"] { stroke-dashoffset: 0; animation: none; }
+  .site-mark { animation: none; }
+  .site-mark.cat-low .site-ring { animation: none; opacity: .5; }
   .artifact svg circle.ping { animation: none; opacity: 0; }
   .playhead { transition: none; }
   /* Everything still ARRIVES, it just does not travel. bootIn/rowIn/land keep
@@ -627,17 +658,18 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     <div class="col-c">
       <section class="panel artifact" id="artifact-panel" aria-labelledby="ar-h" hidden>
         <h2 id="ar-h">What the agent read, and what it produced</h2>
-        <div class="panes">
-          <figure class="pane" style="margin:0">
-            <h3>Source, read by imagery_inspector</h3>
+        <figure class="pane" style="margin:0">
+          <h3>The frame the imagery agent read, with its reading overlaid</h3>
+          <div class="map-wrap">
             <img id="source-image" alt="NOAA NCCOS harmful algal bloom operational forecast for Florida, showing Karenia brevis sample categories" src="api/source-image">
-            <figcaption id="source-caption"></figcaption>
-          </figure>
-          <div class="pane">
-            <h3>Generated, by render_incident_map</h3>
-            <div id="artifact-svg"></div>
-            <p class="artifact-note" id="artifact-note"></p>
+            <div class="site-layer" id="site-layer" aria-hidden="true"></div>
           </div>
+          <figcaption id="source-caption"></figcaption>
+        </figure>
+        <div class="pane tool-pane">
+          <h3>Tool artifact, render_incident_map</h3>
+          <div id="artifact-svg"></div>
+          <p class="artifact-note" id="artifact-note"></p>
         </div>
         <div class="advisory" id="advisory"></div>
       </section>
@@ -905,6 +937,41 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     }, 200);
   });
 
+  // ---- the reading, overlaid on the frame it was read from ------------------
+  var siteData = null;
+
+  function renderSites(show) {
+    var layer = $("site-layer");
+    if (!layer) { return; }
+    layer.innerHTML = "";
+    if (!show || !siteData) { return; }
+    (siteData.sites || []).forEach(function (site, i) {
+      var m = document.createElement("div");
+      m.className = "site-mark " +
+        (site.category === "low" ? "cat-low" : "cat-none") +
+        (site.x > 0.58 ? " flip" : "");
+      m.style.left = (site.x * 100).toFixed(1) + "%";
+      m.style.top = (site.y * 100).toFixed(1) + "%";
+      m.style.animationDelay = (i * 0.12) + "s";
+      if (site.category === "low") {
+        var ring = document.createElement("span");
+        ring.className = "site-ring";
+        m.appendChild(ring);
+      }
+      var dot = document.createElement("span");
+      dot.className = "site-dot";
+      var lab = document.createElement("span");
+      lab.className = "site-label";
+      lab.textContent = site.name + " [" + site.category + "]";
+      m.appendChild(dot); m.appendChild(lab);
+      layer.appendChild(m);
+    });
+    text($("source-caption"),
+      "NOAA NCCOS HAB Operational Forecast, the exact frame the imagery agent "
+      + "read. Markers are the agent's reading: " + (siteData.positioning || "")
+      + ". Category colors match the map legend; no numeric values are implied.");
+  }
+
   // ---- the signature element -----------------------------------------------
   function drawRuler(data) {
     var bands = $("bands");
@@ -994,6 +1061,17 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
 
   var TL_ORDER = ["sonar", "vision", "regulatory", "decide", "mapper"];
 
+  function dotCenter(el, container) {
+    // The center of the node's DOT, not of the node's box. The first version
+    // used offsetTop + offsetHeight/2, which is the middle of the whole row;
+    // the dot sits near the TOP of the row, so the packet floated ~10px below
+    // every dot it visited. Measure the dot itself and the misalignment class
+    // disappears instead of being tuned away.
+    var d = el.querySelector(".tl-dot").getBoundingClientRect();
+    var c = container.getBoundingClientRect();
+    return { x: d.left - c.left + d.width / 2, y: d.top - c.top + d.height / 2 };
+  }
+
   function movePacket(stage, state) {
     // One element that actually travels to the node currently working, using
     // the positions the page already knows. Decoration that fires on its own
@@ -1001,10 +1079,10 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     var pk = $("tl-packet");
     if (!pk || REDUCED) { return; }
     var el = $("node-" + NODE_OF[stage]);
-    var first = $("node-" + TL_ORDER[0]);
-    if (!el || !first) { return; }
-    var y = el.offsetTop - first.offsetTop + (el.offsetHeight / 2) - 3.5;
-    pk.style.transform = "translateY(" + y.toFixed(1) + "px)";
+    if (!el) { return; }
+    var c = dotCenter(el, pk.parentNode);
+    pk.style.transform = "translate(" + (c.x - 3.5).toFixed(1) + "px," +
+                                        (c.y - 3.5).toFixed(1) + "px)";
     pk.classList.toggle("on", state === "RUNNING");
   }
 
@@ -1027,8 +1105,9 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
       if (el && el.getAttribute("data-state") !== "PENDING") { last = el; }
     });
     if (!last) { fill.style.height = "0"; return; }
-    var top = $("node-" + TL_ORDER[0]).offsetTop;
-    fill.style.height = Math.max(0, (last.offsetTop + last.offsetHeight / 2) - top) + "px";
+    // Fill to the last completed node's DOT center, same anchor as the packet.
+    var c = dotCenter(last, fill.parentNode);
+    fill.style.height = Math.max(0, c.y - 6) + "px";
   }
 
   function setStatus(state, label) {
@@ -1042,7 +1121,8 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     $("tl-fill").style.height = "0";
     var pk = $("tl-packet");
     pk.classList.remove("on");
-    pk.style.transform = "translateY(0)";
+    pk.style.transform = "";
+    renderSites(false);
   }
 
   function addRow(r) {
@@ -1063,6 +1143,8 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     var host = $("trace");
     host.appendChild(row);
     setNode(stage, level === "COMPLETE" ? "COMPLETE" : "RUNNING");
+
+    if (stage === "vision" && level === "COMPLETE") { renderSites(true); }
 
     // The sweep runs while the acoustic stage is actually working, and its
     // duration is the real recorded gap between dispatch and completion,
@@ -1111,6 +1193,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     text($("v-cellthr"), a.cell_threshold_in_federal_doc ? "present" : "absent, 0 occurrences");
     text($("v-tools"), (d.tool_calls || []).join(", ") || "none");
     setStatus("done", "run complete");
+    renderSites(true);
     var v = $("verdict");
     v.hidden = false;
     v.classList.remove("land");
@@ -1205,18 +1288,27 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
 
   (function () {
     var img = $("source-image");
-    img.addEventListener("load", function () {
-      text($("source-caption"),
-        "NOAA NCCOS HAB Operational Forecast, " + img.naturalWidth + " by " +
-        img.naturalHeight + " px. The exact frame the imagery agent read. " +
-        "Five category bands, no numeric values anywhere on it.");
-    });
+    // Caption is owned by the sites fetch and renderSites; the image load
+    // handler only covers the failure branch now.
     img.addEventListener("error", function () {
       // Terminal branch. Do not leave a broken image icon on a judged surface.
       img.hidden = true;
       text($("source-caption"), "Source image unavailable on this instance.");
     });
   })();
+
+  fetch("api/sites").then(function (r) {
+    if (!r.ok) { throw new Error("sites"); }
+    return r.json();
+  }).then(function (d) {
+    siteData = d;
+    text($("source-caption"),
+      "NOAA NCCOS HAB Operational Forecast, the exact frame the imagery agent "
+      + "read. Press REPLAY VERIFIED RUN and the agent's reading is overlaid "
+      + "when the imagery stage completes.");
+  }).catch(function () {
+    text($("source-caption"), "Site data unavailable; the frame is shown without markers.");
+  });
 
   fetch("api/waveform").then(function (r) {
     if (!r.ok) { throw new Error("waveform"); }

@@ -281,3 +281,21 @@ def test_crosshairs_only_on_sites_above_the_trigger():
     above = [s for s in SITES if s[3] not in ("not present", "very low")]
     assert svg.count("<path d=\"M ") >= len(above)
     assert len(above) == 2, "expected the two 'low' sites"
+
+
+def test_overlay_table_and_schematic_table_cannot_drift():
+    """The map overlay (core.sites) and the schematic renderer (agents.tools)
+    both carry the four sites. Same names, same categories, or the page would
+    show one reading and the tool artifact another."""
+    from core.sites import SITES_ON_IMAGE
+    from agents.tools import SITES as SCHEMATIC
+    overlay = {s["name"]: s["category"] for s in SITES_ON_IMAGE}
+    schematic = {name: cat for name, _x, _y, cat in SCHEMATIC}
+    assert overlay == schematic
+
+
+def test_overlay_positions_are_sane_fractions():
+    from core.sites import SITES_ON_IMAGE, POSITIONING_NOTE
+    for s in SITES_ON_IMAGE:
+        assert 0.05 < s["x"] < 0.95 and 0.05 < s["y"] < 0.95, s["name"]
+    assert "approximate" in POSITIONING_NOTE

@@ -1,19 +1,34 @@
-Demo script: the waveform authenticity line is now a never-cut beat
+Reading overlaid on the real NOAA frame; packet anchored to dot centers
 
-Added the delivery line for the hydrophone shot, with the camera direction to
-point at the 15.9s spike while saying it:
+TWO DEFECTS REPORTED FROM THE LIVE PAGE, both real:
 
-  "This isn't an animation. It's the actual loudness of the actual ocean
-   recording our agent listened to, and that spike is a real event at 15.9
-   seconds into the clip."
+1. The travelling packet floated below every node dot. Cause: it targeted
+   offsetTop + offsetHeight/2, the middle of the whole ROW, while the dot
+   sits near the row's top. Both the packet and the spine fill now measure
+   the .tl-dot rect itself, so the anchor is the dot center by construction.
+   Verified to the decimal on the served page: packet center 7.5, 266.3
+   against a dot center of 7.5, 266.3.
 
-Promoted to the never-cut list alongside the band ruler and the VERIFIED
-badges: nearly every hackathon dashboard waveform is a random pulsing
-animation, so the one sentence establishing this one is computed from the
-committed audio file is the sharpest differentiator in the video.
+   Debugging note worth keeping: the first probe showed the packet 139px off
+   AFTER the fix, which looked like a worse bug. It was the probe: CSS
+   transitions do not advance in a tab that never paints, so the frozen
+   mid-transition value read as a misposition. Bypassing the transition for
+   one frame showed the true landing spot. Same non-painting-tab family as
+   the rAF sweep and the screenshot stalls.
 
-Chain of custody, for anyone checking: NOAA public recording, fetched by
-scripts/fetch_data.ps1, the exact 60s clip committed in the repo,
-core/waveform.py computes the 320-bucket envelope, the page draws those
-numbers. Tests assert the envelope matches a real 60s 16 kHz recording and
-fail the build if Math.random ever appears on the page.
+2. The dual-pane evidence images rendered small, and two small frames side
+   by side said less than one big one. MERGED: the actual NOAA frame now
+   renders at full column width with the imagery agent's reading overlaid
+   as markers ON it. Pulsing amber rings on the two [low] sites, gray dots
+   on [not present], labeled chips that flip near the right edge, appearing
+   when the imagery stage completes during the replay.
+
+   Positions live in core/sites.py, measured by eye off the visible sample
+   clusters of the committed frame, and BOTH the payload and the on-page
+   caption say "approximate positions" in as many words. An eyeballed
+   overlay that says it is eyeballed beats a precise-looking schematic that
+   corresponds to nothing. A test pins core/sites.py and the schematic
+   renderer's table together so the two readings can never drift, and the
+   tool artifact stays on the page below the advisory, smaller.
+
+111 tests pass.

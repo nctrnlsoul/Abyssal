@@ -411,3 +411,33 @@ def test_page_contains_no_random_generated_data():
         pytest.skip("console not built yet")
     t = HTML.read_text(encoding="utf-8")
     assert "Math.random" not in t
+
+
+def test_packet_and_spine_anchor_to_the_dot_not_the_row():
+    """Reported from the live page: the travelling packet floated below every
+    node dot. Cause: offsetHeight/2 is the middle of the ROW, and the dot sits
+    near the row's top. Both the packet and the spine fill must measure the
+    .tl-dot itself."""
+    if not HTML.exists():
+        pytest.skip("console not built yet")
+    t = HTML.read_text(encoding="utf-8")
+    assert "function dotCenter" in t
+    assert 'querySelector(".tl-dot").getBoundingClientRect()' in t
+    assert "offsetHeight / 2" not in t, "row-center math is back"
+
+
+def test_site_overlay_is_fed_by_the_api_and_labelled_approximate():
+    """The merged evidence view: the agent's reading overlaid on the actual
+    NOAA frame. Marker positions come from /api/sites, and the approximate
+    placement is stated on the page, not hidden."""
+    if not HTML.exists():
+        pytest.skip("console not built yet")
+    t = HTML.read_text(encoding="utf-8")
+    assert 'id="site-layer"' in t
+    assert 'fetch("api/sites")' in t
+    assert "renderSites" in t
+    from web.app import app
+    from fastapi.testclient import TestClient
+    d = TestClient(app).get("/api/sites").json()
+    assert len(d["sites"]) == 4
+    assert "approximate" in d["positioning"]
