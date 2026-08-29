@@ -1,43 +1,40 @@
-Submission docs, written from the repo and asserted by tests
+Tactical treatment on the generated map, in our own CSS and SVG
 
-docs/DEVPOST.md, docs/DEMO_SCRIPT.md and a rewritten README, all grounded in
-what the code actually does.
+Coordinate grid, layered glowing coastline, marker glow via an SVG filter, and
+crosshair ticks on the two sites actually above the closure trigger. Not on the
+"not present" sites: decoration must not claim attention the reading does not
+support.
 
-tests/test_claims.py recomputes every number in the judged prose from the code
-rather than trusting the sentence. On its FIRST run it caught two stale claims
-of my own:
+All self-contained geometry, no background-image and no external reference,
+because this markup is committed into the recorded run and re-rendered through
+the page sanitizer, which strips use, image, foreignObject, script and anchor
+tags. A test asserts the filter survives that round trip and that none of the
+stripped elements are used.
 
-  prose said 73 tests, suite collected 90
-  prose credited core/synthesis with 12 tests, it has 16
+WHAT WAS SUGGESTED AND NOT TAKEN, with reasons:
 
-Both were true when written and went stale silently, which is the exact failure
-this test exists to prevent. It also proves the headline claim rather than
-repeating it: it opens the 532-page PDF and asserts that "5,000 cells" appears
-zero times, and it cross-checks the recorded run's cited pages, the verified
-citation count, the closure trigger constant, the FWC band edges, the computed
-ruler position and the live URL.
+  3D globe. Agreed it is wrong: a global projection for a dataset living
+  between Tampa Bay and the Keys is geographically wrong, and Three.js is an
+  external script the CSP blocks by design.
 
-It blocks the specific fabrications that kept reappearing in AI-suggested
-submission copy: Firestore, Vertex AI, Cloud Storage, decibel computation,
-"threshold breach", and "202 Accepted". None are used and several are the
-opposite of the finding.
+  Tailwind classes (border-cyan-500/30, bg-emerald-500 shadow-[...],
+  bg-[radial-gradient(...)], animate-ping). Fourth pass of the same error.
+  There is no Tailwind in this project; those resolve to nothing.
 
-TWO OF MY OWN TESTS WERE WRONG AND I FIXED THE TESTS, NOT THE CODE:
+  "We need to introduce a playhead sweep matching the trace duration" and
+  "add animated radar rings over the map". Both already shipped. The suggestion
+  was made from static screenshots, so nothing that moves was visible.
 
-1. The forbidden-term check flagged the README's honest sentence "has no
-   decibel field, by construction", which is the opposite of a fabrication.
-   A blunt substring check cannot tell a claim from its denial. It now allows
-   a sentence carrying a negation to name the thing it denies.
+AND ONE CLAIM TO IGNORE OUTRIGHT: a suggestion argued the hydrophone must stay
+or the entry loses eligibility for a "Best Multimodal UX ($5,000)" category.
+That category came from the same source earlier in this project and was
+recorded as UNVERIFIED at the time; the tracks actually read off the rules page
+were Fortified Enterprise Fleet ($20,000) and Individual/Hobbyist (2 x $10,000).
+A claim repeated back to you is still unverified. Re-read the rules page before
+choosing a submission category.
 
-2. The test-count check grabbed every "N tests" in the prose and tripped on
-   the decision layer's own separate count. Split into a total-suite claim and
-   a decision-layer claim, each verified against its own collection. A claim
-   test that cannot tell two claims apart produces false failures and then gets
-   disabled, which is worse than not having it.
+The hydrophone stays for the honest reason: it demonstrates real multimodal
+capability on real data. It is not the most important feature, and it does not
+feed the verdict.
 
-The demo script carries an explicit "do not say" list: never call the recorded
-run live, never say crisis or critical when the finding is that the map is
-ambiguous, never say decibel or threshold breach, never name a Google product
-the project does not use.
-
-91 tests plus 22 route assertions pass.
+94 tests pass.

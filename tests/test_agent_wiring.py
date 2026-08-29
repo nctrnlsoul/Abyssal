@@ -249,3 +249,35 @@ def test_wrap_never_returns_more_than_max_lines():
     assert len(_wrap("a " * 500, 40, 2)) <= 2
     assert _wrap("short", 40, 2) == ["short"]
     assert _wrap("", 40, 2) == []
+
+
+def test_map_grid_is_self_contained_geometry_not_an_external_asset():
+    """This markup is committed into the recorded run and re-rendered through a
+    sanitizer, so a CSS background-image or an external reference would be
+    stripped or would silently fail to load."""
+    svg = render_incident_map("x")["svg"]
+    assert "<line" in svg, "no grid geometry"
+    assert "url(http" not in svg and "background-image" not in svg
+    assert "xlink:href" not in svg
+
+
+def test_map_defs_filter_survives_the_page_sanitizer():
+    """The page strips script, foreignObject, use, image and anchor tags. The
+    glow uses filter + feGaussianBlur, none of which are on that list, so it
+    must still be present after a round trip."""
+    import xml.etree.ElementTree as ET
+    NS = "{http://www.w3.org/2000/svg}"
+    root = ET.fromstring(render_incident_map("x")["svg"])
+    assert root.find(f".//{NS}filter") is not None
+    for stripped in ("use", "image", "foreignObject", "script", "a"):
+        assert root.find(f".//{NS}{stripped}") is None, f"{stripped} would be stripped"
+
+
+def test_crosshairs_only_on_sites_above_the_trigger():
+    """Decoration must not assert something the data does not say. A crosshair
+    on a 'not present' site would claim attention the reading does not support."""
+    from agents.tools import SITES
+    svg = render_incident_map("x")["svg"]
+    above = [s for s in SITES if s[3] not in ("not present", "very low")]
+    assert svg.count("<path d=\"M ") >= len(above)
+    assert len(above) == 2, "expected the two 'low' sites"

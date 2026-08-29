@@ -28,6 +28,26 @@ MONO_ADVANCE = 0.6
 HEADLINE_CHARS = int((VIEW_W - 16) / (HEADLINE_PT * MONO_ADVANCE))
 
 
+def _grid(w: float, h: float, step: float = 20.0) -> str:
+    """A coordinate grid, as real SVG lines.
+
+    Deliberately not a CSS background-image or an external asset: this markup
+    is also committed into the recorded run and re-rendered by the console
+    through a sanitizer, so it has to be self-contained geometry.
+    """
+    lines = []
+    x = step
+    while x < w:
+        lines.append(f'<line x1="{x}" y1="0" x2="{x}" y2="{h}"/>')
+        x += step
+    y = step
+    while y < h:
+        lines.append(f'<line x1="0" y1="{y}" x2="{w}" y2="{y}"/>')
+        y += step
+    return ('<g stroke="#38D6E0" stroke-width="0.25" opacity="0.14">'
+            + "".join(lines) + '</g>')
+
+
 def label_anchor(cx: float, label: str, view_w: float = None) -> tuple[str, float]:
     """Decide which side of a marker its label sits on.
 
@@ -99,11 +119,24 @@ def render_incident_map(headline: str) -> dict:
         # because the string itself was perfectly valid.
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" '
         f'role="img" aria-label="Florida Karenia brevis monitoring sites">',
-        f'<rect width="{w}" height="{h}" fill="#0b1220"/>',
+        f'<rect width="{w}" height="{h}" fill="#070B10"/>',
+        # Coordinate grid. Drawn as real geometry rather than a background
+        # image so it scales with the viewBox and needs no external asset.
+        # Defs first: a soft glow the markers reuse, so the accent is applied
+        # in one place instead of per element.
+        '<defs>'
+        '<filter id="ab-glow" x="-60%" y="-60%" width="220%" height="220%">'
+        '<feGaussianBlur stdDeviation="1.6" result="b"/>'
+        '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>'
+        '</filter>'
+        '</defs>',
+        _grid(w, h),
         # Schematic on purpose. Calling a site diagram a map is the small
         # overclaim that becomes a big one.
         '<path d="M 74,26 C 112,22 136,40 140,64 C 144,90 129,116 108,126" '
-        'fill="none" stroke="#334155" stroke-width="1.6"/>',
+        'fill="none" stroke="#1f6f78" stroke-width="3" opacity="0.25"/>',
+        '<path d="M 74,26 C 112,22 136,40 140,64 C 144,90 129,116 108,126" '
+        'fill="none" stroke="#5b7d8c" stroke-width="1.4"/>',
         f'<text x="8" y="12" font-size="4.4" fill="#64748b" '
         f'font-family="monospace">SCHEMATIC. Site categories only, not a '
         f'georeferenced map, no cell counts implied.</text>',
@@ -113,9 +146,19 @@ def render_incident_map(headline: str) -> dict:
         cx, cy = 18 + x * 120, 26 + y * 74
         label = f"{name} [{cat}]"
         anchor, tx = label_anchor(cx, label, w)
+        fill = _FILL.get(cat, "#94a3b8")
+        # Crosshair ticks on the sites that matter, so the eye lands on them
+        # without needing color alone to carry it.
+        if cat not in ("not present", "very low"):
+            parts.append(
+                f'<path d="M {cx-6.5:.1f},{cy:.1f} h 3 M {cx+3.5:.1f},{cy:.1f} h 3 '
+                f'M {cx:.1f},{cy-6.5:.1f} v 3 M {cx:.1f},{cy+3.5:.1f} v 3" '
+                f'stroke="{fill}" stroke-width="0.6" opacity="0.9"/>'
+            )
         parts.append(
             f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="3.0" '
-            f'fill="{_FILL.get(cat, "#94a3b8")}" stroke="#0b1220" stroke-width="0.8"/>'
+            f'fill="{fill}" stroke="#070B10" stroke-width="0.8" '
+            f'filter="url(#ab-glow)"/>'
         )
         parts.append(
             f'<text x="{tx:.1f}" y="{cy + 1.6:.1f}" font-size="{LABEL_PT}" '

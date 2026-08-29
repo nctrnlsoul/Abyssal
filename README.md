@@ -65,7 +65,7 @@ py -3 -m venv .venv
 .\scripts\serve.ps1 -Port 8080
 
 # 4. the tests
-.\scripts\run_tests.ps1      # 91 tests
+.\scripts\run_tests.ps1      # 94 tests
 .\scripts\smoke_web.ps1      # 22 route assertions
 ```
 
