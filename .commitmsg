@@ -1,59 +1,43 @@
-LIVE on Cloud Run. All three mandatory requirements now met.
+Submission docs, written from the repo and asserted by tests
 
-https://abyssal-7517955252.us-central1.run.app  revision abyssal-00002-mcj
+docs/DEVPOST.md, docs/DEMO_SCRIPT.md and a rewritten README, all grounded in
+what the code actually does.
 
-  Gemini 3.5+              YES, live on every data stage
-  Google agent framework   YES, ADK LlmAgent + InMemoryRunner
-  Google Cloud service     YES, Cloud Run
+tests/test_claims.py recomputes every number in the judged prose from the code
+rather than trusting the sentence. On its FIRST run it caught two stale claims
+of my own:
 
-CONTAINER, corrected against a suggested Dockerfile that would not have started:
-  CMD web.app:app, not app.main:app. The suggested version pointed at a package
-  this project does not have; that container starts, fails and restarts forever
-  while the deploy reports success. Now asserted by a test AND by a build-time
-  import smoke test, so the BUILD fails instead.
-  python:3.13-slim to match the interpreter the suite was verified on.
-  No build-essential: the envelope uses stdlib wave, so a toolchain would add
-  hundreds of megabytes and a compiler to a public image for nothing.
-  requirements-web.txt only. scripts/import_graph.py exercises every route in a
-  fresh interpreter and proves the console reaches no google-adk, no pymupdf,
-  no numpy. Installing the full requirements.txt would have put the whole agent
-  framework on a public unauthenticated surface.
-  .dockerignore and .gcloudignore, non-root user.
+  prose said 73 tests, suite collected 90
+  prose credited core/synthesis with 12 tests, it has 16
 
-DEPLOY, closing two omissions adversarial review caught on the last project:
-  --service-account with a dedicated account holding NO IAM roles. Without it
-  the revision runs as project EDITOR, mintable from the metadata server on a
-  PUBLIC url.
-  --max-instances 3, which IS the spend cap.
-  LASTEXITCODE checked, because ErrorActionPreference does not stop a failed
-  native command and a broken build would report as a successful deploy.
-  No GOOGLE_API_KEY on the service. The console is keyless and spendless.
+Both were true when written and went stale silently, which is the exact failure
+this test exists to prevent. It also proves the headline claim rather than
+repeating it: it opens the 532-page PDF and asserts that "5,000 cells" appears
+zero times, and it cross-checks the recorded run's cited pages, the verified
+citation count, the closure trigger constant, the FWC band edges, the computed
+ruler position and the live URL.
 
-TWO BUGS FOUND BY DEPLOYING RATHER THAN BY READING:
+It blocks the specific fabrications that kept reappearing in AI-suggested
+submission copy: Firestore, Vertex AI, Cloud Storage, decibel computation,
+"threshold breach", and "202 Accepted". None are used and several are the
+opposite of the finding.
 
-1. deploy.ps1 did not anchor its working directory, so PowerShell default cwd
-   applied, --source . resolved to C:\Windows\System32, and gcloud spent two
-   minutes uploading the Windows system directory before crashing on
-   catroot2\edb.log. It also silently fell back to Buildpacks. A relative
-   --source in a script that does not pin its location does not fail with
-   "file not found"; it uploads your operating system. Fixed with
-   Set-Location $PSScriptRoot plus a preflight that refuses to deploy if the
-   required files are not in the cwd.
+TWO OF MY OWN TESTS WERE WRONG AND I FIXED THE TESTS, NOT THE CODE:
 
-2. /healthz 404s on Cloud Run because THE GOOGLE FRONT END INTERCEPTS IT and
-   serves its own 404. The request never reaches the container. Proved by
-   comparing response bodies on the live url:
-       /healthz      Google "That is an error" HTML     GFE
-       /nope         our JSON error body                our app
-       /health       our JSON error body                our app
-       /api/healthz  our JSON error body                our app
-   Renamed to /health. This also CORRECTS a wrong diagnosis on the previous
-   project, where the identical 404 was blamed on a stale revision.
-   Durable rule: a 404 is not evidence about your code until you have read the
-   body and confirmed which server wrote it.
+1. The forbidden-term check flagged the README's honest sentence "has no
+   decibel field, by construction", which is the opposite of a fabrication.
+   A blunt substring check cannot tell a claim from its denial. It now allows
+   a sentence carrying a negation to name the thing it denies.
 
-Verified live: /health, /, /api/run, /api/bands, /api/waveform and
-/api/source-image all 200, with CSP, HSTS, nosniff and frame-deny present on
-the public url.
+2. The test-count check grabbed every "N tests" in the prose and tripped on
+   the decision layer's own separate count. Split into a total-suite claim and
+   a decision-layer claim, each verified against its own collection. A claim
+   test that cannot tell two claims apart produces false failures and then gets
+   disabled, which is worse than not having it.
 
-73 tests plus 22 route assertions pass.
+The demo script carries an explicit "do not say" list: never call the recorded
+run live, never say crisis or critical when the finding is that the map is
+ambiguous, never say decibel or threshold breach, never name a Google product
+the project does not use.
+
+91 tests plus 22 route assertions pass.

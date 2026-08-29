@@ -2,8 +2,10 @@
 
 A multi-agent marine biosecurity control plane that reads the actual regulation.
 
-Built for the Google All Things Agentic Hackathon. Four agents run as long-running
-background work over **real public data**, not a simulation.
+**Live: https://abyssal-7517955252.us-central1.run.app**
+
+Built for the Google All Things Agentic Hackathon. Four agents run over **real
+public data**, not a simulation.
 
 ## What is real and what is not
 
@@ -48,8 +50,87 @@ All source data is US Government public domain.
 
 ## Spin-up
 
-Documented before the deadline. `scripts/fetch_data.ps1` reproduces every source
-asset from its original public URL, so the repo carries no large binaries.
+Windows, PowerShell. Every step is a script in `scripts/`.
+
+```powershell
+# 1. dependencies
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+
+# 2. fetch the source data (about 91 MB, from NOAA, NASA and FDA)
+.\scripts\fetch_data.ps1
+.\scripts\prep_audio.ps1     # cuts the 60s 16 kHz windows with ffmpeg
+
+# 3. the console. KEYLESS: this process reads no API key.
+.\scripts\serve.ps1 -Port 8080
+
+# 4. the tests
+.\scripts\run_tests.ps1      # 91 tests
+.\scripts\smoke_web.ps1      # 22 route assertions
+```
+
+To run the **live** agent pipeline, which does make real Gemini calls and costs
+about $0.42 for a full pass:
+
+```powershell
+# GOOGLE_API_KEY must be an OS environment variable. Never put it in a file.
+.\scripts\run_pipeline.ps1   # four ADK agents, real Gemini, real files
+.\scripts\record_run.ps1     # the same, saved to docs/recorded-run.json
+```
+
+`scripts/fetch_data.ps1` reproduces every source asset from its original public
+URL, so the repo carries no large binaries. The two derived 60-second clips and
+the NOAA forecast frame are committed, so a fresh clone can serve the console
+without downloading anything.
+
+## Deploy
+
+```powershell
+.\deploy.ps1
+```
+
+Builds from the `Dockerfile` and deploys to Cloud Run with a dedicated service
+account holding **no IAM roles**, `--max-instances 3` as the spend cap, and
+**no API key on the service**. The deployed image installs
+`requirements-web.txt` only; `scripts/import_graph.py` proves in a fresh
+interpreter that the console reaches no `google-adk`, `pymupdf` or `numpy`.
+
+## The finding
+
+Florida closes shellfish harvesting when *Karenia brevis* reaches or exceeds
+**5,000 cells per litre**. FWC's published bloom scale puts "very low" at 1,000
+to 10,000 cells/L, so **the closure trigger lands inside a published category**
+and the map alone cannot tell you whether an area is closed.
+
+And the number everyone cites is not federal. **"5,000 cells" appears zero
+times in the 532-page FDA ordinance.** The actual criterion, page 70, is
+`NSP - 20 MU/100 grams (0.8 mg brevetoxin-2 equivalents/kg)`, measured in
+shellfish meats. Page 359 reconciles it: cell counts trigger *testing*, toxin
+in meat triggers *closure*.
+
+Full working in `docs/GROUND_TRUTH.md`, which was written by reading the PDF
+**before** the agent existed, so the agent could be graded rather than trusted.
+
+## How each stage was verified
+
+| Stage | Result |
+|---|---|
+| Regulatory | 5/5 graded checks, **2/2 citations verified as exact substrings of the cited page** |
+| Imagery | 7/7 graded checks, plus a differential against a second image |
+| Acoustic | Differential control: two windows, same reef in both, vessel engine in one only |
+| Decision | Pure Python, no model, 16 tests including the band boundaries |
+
+## Notes for reviewers
+
+- The console **replays a recorded real run**, labelled as recorded on the page
+  and in the payload. A live run costs about $0.42 and reads 532 pages; an
+  unauthenticated endpoint that spends that per click is denial-of-wallet.
+- `core/schemas.py` has **no decibel field, by construction**. A SanctSound
+  FLAC carries no calibration constant, so sound pressure level cannot be
+  recovered from the waveform.
+- The waveform on the console is a real 320-bucket peak envelope of the same
+  clip the acoustic agent read, computed with stdlib `wave`.
+- Zero external requests: no CDN, no webfont, no icon library.
 
 ## Licence
 
