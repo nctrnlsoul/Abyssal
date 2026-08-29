@@ -49,8 +49,8 @@ check("source image is a png", r.headers.get("content-type") == "image/png",
       f"{len(r.content)} bytes")
 check("source image carries headers", "Content-Security-Policy" in r.headers)
 
-r = c.get("/healthz")
-check("GET /healthz 200", r.status_code == 200)
+r = c.get("/health")
+check("GET /health 200", r.status_code == 200)
 
 r = c.get("/nope")
 check("404 is generic", r.status_code == 404 and r.json() == {"error": "not available"})

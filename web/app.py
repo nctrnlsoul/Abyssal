@@ -288,6 +288,21 @@ def source_image() -> Response:
     return r
 
 
-@app.get("/healthz")
-def healthz() -> dict:
+# /health, NOT /healthz.
+#
+# MEASURED ON THE DEPLOYED SERVICE 2026-08-29: the Google Front End intercepts
+# /healthz on Cloud Run and returns its OWN 404 page. The request never reaches
+# the container. Proved by comparing bodies from the live URL:
+#
+#   /healthz      404, body is Google's "That's an error" HTML  -> GFE
+#   /nope         404, body is {"error":"not available"}        -> our app
+#   /health       404, body is {"error":"not available"}        -> our app
+#   /api/healthz  404, body is {"error":"not available"}        -> our app
+#
+# So the path itself is reserved upstream, and any liveness check pointed at
+# /healthz would report the service down while it is perfectly healthy. This
+# also explains the identical symptom on the previous project, which was
+# wrongly attributed there to a stale revision.
+@app.get("/health")
+def health() -> dict:
     return {"ok": True}

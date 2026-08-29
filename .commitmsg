@@ -1,0 +1,59 @@
+LIVE on Cloud Run. All three mandatory requirements now met.
+
+https://abyssal-7517955252.us-central1.run.app  revision abyssal-00002-mcj
+
+  Gemini 3.5+              YES, live on every data stage
+  Google agent framework   YES, ADK LlmAgent + InMemoryRunner
+  Google Cloud service     YES, Cloud Run
+
+CONTAINER, corrected against a suggested Dockerfile that would not have started:
+  CMD web.app:app, not app.main:app. The suggested version pointed at a package
+  this project does not have; that container starts, fails and restarts forever
+  while the deploy reports success. Now asserted by a test AND by a build-time
+  import smoke test, so the BUILD fails instead.
+  python:3.13-slim to match the interpreter the suite was verified on.
+  No build-essential: the envelope uses stdlib wave, so a toolchain would add
+  hundreds of megabytes and a compiler to a public image for nothing.
+  requirements-web.txt only. scripts/import_graph.py exercises every route in a
+  fresh interpreter and proves the console reaches no google-adk, no pymupdf,
+  no numpy. Installing the full requirements.txt would have put the whole agent
+  framework on a public unauthenticated surface.
+  .dockerignore and .gcloudignore, non-root user.
+
+DEPLOY, closing two omissions adversarial review caught on the last project:
+  --service-account with a dedicated account holding NO IAM roles. Without it
+  the revision runs as project EDITOR, mintable from the metadata server on a
+  PUBLIC url.
+  --max-instances 3, which IS the spend cap.
+  LASTEXITCODE checked, because ErrorActionPreference does not stop a failed
+  native command and a broken build would report as a successful deploy.
+  No GOOGLE_API_KEY on the service. The console is keyless and spendless.
+
+TWO BUGS FOUND BY DEPLOYING RATHER THAN BY READING:
+
+1. deploy.ps1 did not anchor its working directory, so PowerShell default cwd
+   applied, --source . resolved to C:\Windows\System32, and gcloud spent two
+   minutes uploading the Windows system directory before crashing on
+   catroot2\edb.log. It also silently fell back to Buildpacks. A relative
+   --source in a script that does not pin its location does not fail with
+   "file not found"; it uploads your operating system. Fixed with
+   Set-Location $PSScriptRoot plus a preflight that refuses to deploy if the
+   required files are not in the cwd.
+
+2. /healthz 404s on Cloud Run because THE GOOGLE FRONT END INTERCEPTS IT and
+   serves its own 404. The request never reaches the container. Proved by
+   comparing response bodies on the live url:
+       /healthz      Google "That is an error" HTML     GFE
+       /nope         our JSON error body                our app
+       /health       our JSON error body                our app
+       /api/healthz  our JSON error body                our app
+   Renamed to /health. This also CORRECTS a wrong diagnosis on the previous
+   project, where the identical 404 was blamed on a stale revision.
+   Durable rule: a 404 is not evidence about your code until you have read the
+   body and confirmed which server wrote it.
+
+Verified live: /health, /, /api/run, /api/bands, /api/waveform and
+/api/source-image all 200, with CSP, HSTS, nosniff and frame-deny present on
+the public url.
+
+73 tests plus 22 route assertions pass.

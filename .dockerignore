@@ -1,0 +1,28 @@
+# Keep the image to what the console serves.
+#
+# `COPY . .` with no ignore file would bundle a 78 MB FLAC, a 6.6 MB PDF, the
+# git history, and a WINDOWS virtualenv whose binaries do not run on Linux.
+
+.git
+.gitignore
+.gitattributes
+.venv
+venv
+__pycache__
+**/__pycache__
+*.pyc
+.pytest_cache
+tests
+scripts
+docs/GROUND_TRUTH.md
+BRIEF.md
+
+# Source data. The console needs the derived clip (for the waveform) and the
+# NOAA frame (for the dual pane). It does NOT need the raw sources.
+data/*.flac
+data/*.pdf
+data/*.jpg
+data/reef_window_b.wav
+
+# The agent code is not on the public surface. The console never imports it.
+agents

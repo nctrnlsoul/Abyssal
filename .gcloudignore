@@ -1,0 +1,20 @@
+# What gets uploaded to Cloud Build. Without this, gcloud falls back to
+# .gitignore semantics, which is not the same set.
+.git
+.gitignore
+.gitattributes
+.venv
+venv
+__pycache__
+**/__pycache__
+*.pyc
+.pytest_cache
+tests
+scripts
+agents
+BRIEF.md
+docs/GROUND_TRUTH.md
+data/*.flac
+data/*.pdf
+data/*.jpg
+data/reef_window_b.wav
