@@ -1,43 +1,42 @@
-Vanilla SVG micro-animation pass: status ring, spine packet, draw-ins
+Three-column command layout, ring beside its trace, honest master switch
 
-The suggested direction was right and this takes it: inline SVG animation, no
-framework, no dependency. Everything animates transform or stroke-dashoffset
-only, so nothing touches layout.
+Adopted from a suggested directive block, four of its five points:
 
-  STATUS RING. Five-part inline SVG in the header. Two concentric segmented
-  arcs counter-rotate at different rates while running, a core dot pulses, and
-  on completion the arcs turn green and a checkmark strokes itself in with
-  stroke-dashoffset. Three parts at different rates read as instrumentation;
-  one spinning circle reads as a loading gif.
+  THREE-COLUMN LAYOUT at >=1360px, the real fix in the batch. Pipeline and
+  hydrophone left, trace and verdict center, evidence panes right. The old
+  two-column left a void under the ruler at desktop widths, and the whole
+  console now reads in one screen. Falls back to two columns at laptop
+  widths and one on mobile.
 
-  SPINE PACKET. A glowing dot that travels down the agent timeline to whichever
-  node is actually working. This is the "data moving between agents" idea, but
-  driven by the real node offsets the page already knows rather than by a timer
-  of its own, so it cannot drift out of step with the trace it represents.
+  RING RELOCATED from the masthead into the trace panel header, beside the
+  thing whose state it reports. Proximity was the right call.
 
-  DRAW-INS. The coastline strokes itself onto the generated map, and the
-  citations rise in with a stagger.
+  EVIDENCE COLUMN SHOWS ON LOAD. The source NOAA frame is real before any
+  replay, so hiding the whole panel until completion left an empty third
+  column. The generated pane now carries an explicit Awaiting-replay
+  terminal state instead of an unexplained dark box, and clears back to it
+  when a replay restarts.
 
-WHAT WAS NOT TAKEN, and why:
+  MASTER SWITCH styling on the primary control: uppercase, letterspaced,
+  accent border and glow.
 
-  templates/index.html, Tailwind classes, /api/v1/status/{job_id}. Fifth pass
-  of the same three errors. None of those exist in this project.
+THE FIFTH DIRECTIVE IS REFUSED, and the refusal is enforced by a test.
 
-  "CRISIS PROTOCOL ACTIVE" as the status label. The finding is that the public
-  map is AMBIGUOUS, not that anything is on fire. A page whose chrome
-  contradicts its own verdict is a page a judge stops trusting. The label says
-  "executing pipeline" and then "run complete", and a test now fails the build
-  if crisis, critical, emergency or threat level appear on the console.
+The directive ordered the button renamed from "Replay Run" to "EXECUTE SITE
+INTEGRITY VERIFICATION" so the app would "feel like a real-time diagnostic
+sweep, not an old prerecorded TV rerun". That is an instruction to disguise
+a recorded replay as a live scan. The payload says mode=recorded, the chip
+says recorded, the footer says recorded; a button claiming otherwise is the
+one statement on the page a judge can disprove in five seconds, and the same
+adviser praised the recorded-run design as "exactly how experienced
+developers protect their wallets" earlier the same day.
 
-  The suggested spinner path was the stock Tailwind docs spinner, which is a
-  recognizable generic tell rather than something custom-built.
+The label is now "REPLAY VERIFIED RUN": every word true, all the visual
+weight of a master switch. test_replay_button_label_stays_honest fails the
+build if the word replay ever leaves the label or the suggested phrasing
+ever lands.
 
-prefers-reduced-motion handled throughout: rotation stops, the checkmark is
-drawn already, the packet stays hidden, the coastline is complete. Meaning is
-never carried by animation alone, the status TEXT always states the state.
+Also not taken, recurring for the sixth time: templates/index.html, Tailwind
+utility classes, and /api/v1/status/{job_id}. None exist in this project.
 
-Four new tests: the ring must stay dependency-free, its keyframes must not
-animate any layout property, the packet must be positioned from real node
-offsets, and no crisis language may appear on the console.
-
-100 tests pass.
+103 tests pass.

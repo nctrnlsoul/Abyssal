@@ -120,7 +120,7 @@ Cut in this order. Never cut the first two.
 2. Cut the dual pane paragraph at 3:00 first.
 3. Then the differential control detail at 1:40, keeping "computed from the
    actual clip".
-4. Then the security sentence at 3:30, keeping "one hundred tests".
+4. Then the security sentence at 3:30, keeping "one hundred three tests".
 
 ## Do not say
 

@@ -331,3 +331,42 @@ def test_no_crisis_language_on_the_console():
     t = HTML.read_text(encoding="utf-8").lower()
     for word in ("crisis", "critical", "emergency", "alert active", "threat level"):
         assert word not in t, f"{word!r} on the console contradicts the finding"
+
+
+def test_replay_button_label_stays_honest():
+    """A suggested directive renamed the button to EXECUTE SITE INTEGRITY
+    VERIFICATION so the recorded replay would read as a live diagnostic sweep.
+    The payload says mode=recorded, the chip says recorded, the footer says
+    recorded; a button claiming otherwise is the one statement on the page a
+    judge can disprove in five seconds, and the styling carries the drama
+    instead. The label must keep saying what the action is."""
+    if not HTML.exists():
+        pytest.skip("console not built yet")
+    import re
+    t = HTML.read_text(encoding="utf-8")
+    m = re.search(r'id="btn-play"[^>]*>([^<]+)<', t)
+    assert m, "replay button missing"
+    assert "replay" in m.group(1).lower(), f"button label {m.group(1)!r} hides the replay"
+    assert "SITE INTEGRITY VERIFICATION" not in t
+
+
+def test_wide_layout_defines_three_columns():
+    if not HTML.exists():
+        pytest.skip("console not built yet")
+    t = HTML.read_text(encoding="utf-8")
+    assert "1360px" in t, "no wide breakpoint"
+    wide = t[t.index("1360px"):t.index("1360px") + 500]
+    assert wide.count("minmax(0,") >= 2, "wide layout is not three columns"
+    for col in ("col-a", "col-b", "col-c"):
+        assert f'class="{col}"' in t, f"{col} missing from markup"
+
+
+def test_generated_pane_has_a_terminal_empty_state():
+    """Every stateful screen has a terminal branch. The evidence column shows
+    on load with the real source frame; the generated side must SAY it is
+    waiting rather than sit as an unexplained dark box."""
+    if not HTML.exists():
+        pytest.skip("console not built yet")
+    t = HTML.read_text(encoding="utf-8")
+    assert "pane-empty" in t
+    assert "Awaiting replay" in t
