@@ -1,35 +1,19 @@
-Full-width hydrophone band and themed scrollbars
+Demo script: the waveform authenticity line is now a never-cut beat
 
-Taken from the latest suggestion round, the two critiques that were right:
+Added the delivery line for the hydrophone shot, with the camera direction to
+point at the 15.9s spike while saying it:
 
-  THE HYDROPHONE GETS THE FULL HORIZON. Moved out of the narrow left column
-  to a full-width band below the grid, the way real audio tools lay out a
-  timeline. 320 buckets across ~1440px instead of ~250px: the vessel
-  transient at 15.9s is now plainly visible, and the amber low band reads
-  as its own lane.
+  "This isn't an animation. It's the actual loudness of the actual ocean
+   recording our agent listened to, and that spike is a real event at 15.9
+   seconds into the clip."
 
-  The move surfaced a real scaling trap: the fixed 320-unit viewBox would
-  have stretched 4.7x across the band and distorted every SVG label with
-  it. The viewBox width now comes from the rendered container, so units
-  stay 1:1 with pixels, with a debounced redraw on resize that preserves
-  lit state and never fights an active sweep.
+Promoted to the never-cut list alongside the band ruler and the VERIFIED
+badges: nearly every hackathon dashboard waveform is a random pulsing
+animation, so the one sentence establishing this one is computed from the
+committed audio file is the sharpest differentiator in the video.
 
-  THEMED SCROLLBARS, both engines: webkit rules plus scrollbar-color for
-  Firefox. The bright native track down the trace console was the last
-  element wearing the OS theme.
-
-NOT taken from the same message, and the first one matters:
-
-  The supplied code block generates its hydrophone bars with Math.random(),
-  one message after praising this project for computing the real envelope
-  and calling the decorative waveform "the exact opposite of what wins".
-  A test now fails the build if Math.random ever appears on the page.
-
-  Also: the dead CDN trio and the /api/v1 backend for the seventh time, a
-  REAL RUN badge on the replay button, and "real-time data playback"
-  phrasing for a recorded replay.
-
-UI IS NOW FROZEN except for defects. Further polish rounds spend deadline
-hours the video and submission need more.
-
-107 tests pass.
+Chain of custody, for anyone checking: NOAA public recording, fetched by
+scripts/fetch_data.ps1, the exact 60s clip committed in the repo,
+core/waveform.py computes the 320-bucket envelope, the page draws those
+numbers. Tests assert the envelope matches a real 60s 16 kHz recording and
+fail the build if Math.random ever appears on the page.

@@ -52,9 +52,15 @@ Pause on the ruler for a full two seconds. It is the thing they will remember.
 
 **SHOT: the hydrophone panel while the playhead sweeps.**
 
-> "That is not a decorative animation. It is a three hundred and twenty bucket
-> peak envelope computed from the actual sixty second clip the acoustic agent
-> analyzed, with Python's standard wave library."
+**SHOT: point the cursor at the spike above "peak 15.9s" while saying this.**
+
+> "This isn't an animation. It's the actual loudness of the actual ocean
+> recording our agent listened to, and that spike is a real event at 15.9
+> seconds into the clip."
+
+> "Three hundred and twenty measurements computed from the file with Python's
+> standard wave library. If someone plays the recording, the loud moment is
+> right there at fifteen point nine."
 
 > "And we did not trust one sample. We ran two different windows from the same
 > deployment. Both heard snapping shrimp, because it is the same reef. Only one
@@ -115,8 +121,10 @@ Pause on the ruler for a full two seconds. It is the thing they will remember.
 
 Cut in this order. Never cut the first two.
 
-1. **Never cut:** the band ruler at 0:00, or the VERIFIED badges at 2:00. Those
-   two are the entire submission.
+1. **Never cut:** the band ruler at 0:00, the VERIFIED badges at 2:00, or the
+   "isn't an animation" line at 1:15. Those three carry the whole credibility
+   argument, and the waveform line is the one that separates this entry from
+   every dashboard with random pulsing bars.
 2. Cut the dual pane paragraph at 3:00 first.
 3. Then the differential control detail at 1:40, keeping "computed from the
    actual clip".
