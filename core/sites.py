@@ -7,7 +7,7 @@ cluster at Tampa Bay / Clearwater, and the single gray point by Port St Lucie.
 
 That makes these APPROXIMATE positions, and every surface that draws them says
 so. Eyeballed-and-labelled beats a precise-looking schematic that corresponds
-to nothing: the overlay puts the agent's reading on the evidence it read.
+to nothing: the overlay marks the visible sample clusters on the evidence the agent read.
 
 Categories are the imagery agent's verified reading of the same frame.
 tests/test_agent_wiring.py asserts this table and the schematic renderer's

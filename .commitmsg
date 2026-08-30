@@ -1,30 +1,39 @@
-Apply subagent verification pass: 4 must-fixes, wording honesty, CSS sweep
+Apply read-only assessment findings: honesty, layman copy, edge-case bugs
 
-- Fix ReferenceError on the /api/run failure path (fail() was deleted with
-  the tool pane); status reads "no recording" and controls disable
-- Remove orphan </div> and vestigial #artifact-note that mis-nested the
-  advisory, hydrophone band and footer
-- Palette: new well #04070A and accent-well #1295A2 tokens; .trace-t was
-  4.09:1 on the well, now 5.62:1; five new pinned contrast pairs; all
-  hardcoded #04070A converted to var(--well)
-- Americanize API-served strings (Unrecognized, cells-per-liter, map color)
-  in synthesis.py and the recorded transcript; new test covers synthesise()
-  output on both branches plus the recorded JSON
-- Waveform: peak_at_seconds is bucket-center (16.0s, was bucket-start
-  15.9s); labels read "peak ~16.0s" and "(ROUGHLY UNDER 500 HZ)" since the
-  16-tap filter's -3dB corner is 443.7 Hz
-- Header sub: "the live NOAA map" -> "NOAA's public red tide map"
-- Close replay-during-sweep rAF race with a generation counter; reset also
-  clears the pending sweep timer and playhead
-- Map caption returns to the awaiting text when markers clear on replay
-- Hide the empty advisory box pre-replay (.advisory:empty)
-- HEAD / returns text/html; btn-speed swaps aria-pressed for data-active;
-  visually hidden marker summary for screen readers; dead CSS swept
-  (.panes, .node block, nodePulse, drawCoast, .boot, .marktext,
-  .artifact svg, .status-line .dot)
-- Claims tests caught prose drift: 111 -> 117 total, decision layer 17;
-  DEMO_SCRIPT 3:00 rewritten for the map overlay; "Ninety tests" written
-  as a word evaded the digit regex, now durable "Over a hundred tests"
+Honesty:
+- DEVPOST: the two machine-verified citations are both p.70; the p.359
+  passage was surfaced in the agent's explanation - the claim now says so.
+  Decision-layer test count 12 -> 17, total 117 -> 118
+- Map attribution de-overclaimed: markers locate the visible sample
+  clusters and their map categories; "the agent's reading" wording removed
+  from heading, captions, sr summary, sites.py comment and the demo script
+- README 520 -> 532 pages (twice); demo script stale cut-note fixed
+
+Bugs:
+- Page carries its own [hidden] { display:none !important } - the image
+  error branch never actually hid the image (author display:block beat the
+  UA rule)
+- sourceImageFailed flag makes the failure caption terminal: caption
+  writers no-op and renderSites clears the marker layer
+- finishSweep clears its backup timer and bumps sweepGen - closes the
+  orphaned-timer path via visibilitychange and the backwards playhead jump
+- Sweep span uses replaySpeed captured at replay start, not the live
+  toggle; renderSites(true) skips when markers already rendered (no
+  double entrance animation); /api/run failure path fixes chip and
+  placeholder; middleware defaults Cache-Control: no-cache
+
+Layman copy (from the judge-persona review):
+- Plain-terms gloss for the MU/NSP unit wall under the verified quotes
+- "5,000 red tide algae cells per liter of seawater" anchors the unit
+- Headline split into two sentences; reconciliation reworded to separate
+  Florida's own closure line from the federal rulebook's testing/closure
+  distinction; "plane idle" -> "standing by"
+- Recorded trace lines deliberately untouched: rewording the recording
+  would break record/replay honesty
+
+recorded-run.json assessment fields updated to match synthesis.py, then
+artifacts regenerated via the deterministic renderers. New pinned test for
+the [hidden] rule and failure-caption guards. 118 tests, 22 smoke checks.
 
 Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_011fGKoidDHjqXRCPhCZYNEG

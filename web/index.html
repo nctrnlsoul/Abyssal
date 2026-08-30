@@ -25,6 +25,7 @@
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 }
 
+[hidden] { display: none !important; }
 * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--rule) var(--well); }
 /* WebKit scrollbars, themed to the field. The bright native track down the
    trace console was the one element still wearing the OS theme. */
@@ -496,6 +497,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     <h2 id="ev-h">Quotes pulled from the rulebook and checked word for word</h2>
     <div id="citations"><p class="empty">Loading the recorded transcript.</p></div>
     <p class="cite-meta" id="verify-meta"></p>
+    <p class="cite-meta">In plain terms: the legal limit is for the toxin in the shellfish meat itself. "MU" (mouse units) is a laboratory dose measure, and NSP is the shellfish poisoning that red tide causes.</p>
   </section>
 
   <!-- SIGNATURE ELEMENT -->
@@ -567,7 +569,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
                       stroke-dasharray="7 34" stroke-dashoffset="0"/>
               <circle class="core" cx="12" cy="12" r="2.4"/>
               <path class="tick-mark" d="M7.5 12.2 L10.6 15.2 L16.5 8.8"/>
-            </svg><span id="status-text">plane idle</span>
+            </svg><span id="status-text">standing by</span>
           </span>
         </div>
         <div class="controls">
@@ -599,7 +601,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
       <section class="panel artifact" id="artifact-panel" aria-labelledby="ar-h" hidden>
         <h2 id="ar-h">What the agents found</h2>
         <figure class="pane" style="margin:0">
-          <h3>The real NOAA map, with what the agent found drawn on it</h3>
+          <h3>The real NOAA map, with the sample sites marked</h3>
           <div class="map-wrap">
             <img id="source-image" alt="NOAA NCCOS harmful algal bloom operational forecast for Florida, showing Karenia brevis sample categories" src="api/source-image">
             <div class="site-layer" id="site-layer" aria-hidden="true"></div>
@@ -644,7 +646,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
 (function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
-  var run = null, speed = 8, timers = [];
+  var run = null, speed = 8, replaySpeed = 8, timers = [];
 
   function text(el, s) { el.textContent = s == null ? "" : String(s); }
 
@@ -755,7 +757,11 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
   var sweepGen = 0;
 
   function finishSweep() {
-    // Terminal state, reachable without a single animation frame.
+    // Terminal state, reachable without a single animation frame. Clear the
+    // backup timer (a nulled-but-armed timer survives every cancel path) and
+    // bump the generation so a still-running rAF loop stops here too.
+    if (sweepDone) { clearTimeout(sweepDone); }
+    sweepGen += 1;
     waveBars.forEach(function (b) { b.classList.add("lit"); });
     lowBars.forEach(function (b) { b.classList.add("lit"); });
     text($("playhead-time"), waveSeconds.toFixed(1) + "s");
@@ -834,17 +840,24 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
 
   // ---- the reading, overlaid on the frame it was read from ------------------
   var siteData = null;
+  var sourceImageFailed = false;
 
   function captionAwaiting() {
+    if (sourceImageFailed) { return; }
     text($("source-caption"),
-      "NOAA NCCOS HAB Operational Forecast, the exact frame the imagery agent "
-      + "read. Press REPLAY VERIFIED RUN and the agent's reading is overlaid "
-      + "when the imagery stage completes.");
+      "NOAA's public red tide forecast map (NCCOS HAB Operational Forecast), "
+      + "the exact frame the imagery agent read. Press REPLAY VERIFIED RUN and "
+      + "the sample sites are marked when the imagery stage completes.");
   }
 
   function renderSites(show) {
     var layer = $("site-layer");
     if (!layer) { return; }
+    if (sourceImageFailed) { layer.innerHTML = ""; return; }
+    // Re-render only from a cleared state: showVerdict calls this again after
+    // vision:COMPLETE already drew the markers, and replaying the entrance
+    // animation on markers that never left reads as a glitch.
+    if (show && layer.childElementCount) { return; }
     layer.innerHTML = "";
     if (!show || !siteData) {
       if (siteData) { captionAwaiting(); }
@@ -872,15 +885,16 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
       layer.appendChild(m);
     });
     text($("source-caption"),
-      "NOAA NCCOS HAB Operational Forecast, the exact frame the imagery agent "
-      + "read. Markers are the agent's reading: " + (siteData.positioning || "")
+      "NOAA's public red tide forecast map (NCCOS HAB Operational Forecast), "
+      + "the exact frame the imagery agent read. Markers locate the visible "
+      + "sample clusters and their map categories: " + (siteData.positioning || "")
       + ". Category colors match the map legend; no numeric values are implied.");
     var srBits = (siteData.sites || []).map(function (s) {
       return s.name + ": " + s.category;
     }).join("; ");
     var sr = document.createElement("span");
     sr.className = "sr";
-    sr.textContent = " Marker readings: " + srBits + ".";
+    sr.textContent = " Markers: " + srBits + ".";
     $("source-caption").appendChild(sr);
   }
 
@@ -924,7 +938,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     read.appendChild(strong);
     read.appendChild(document.createTextNode(
       " Florida closes shellfish harvesting at or above " +
-      data.trigger_cells_per_l.toLocaleString() + " cells per liter. That value falls " +
+      data.trigger_cells_per_l.toLocaleString() + " red tide algae cells per liter of seawater. That value falls " +
       "within the " + (straddling[0] ? "“" + straddling[0].category + "”" : "") +
       " band, so a sample shown in that category on the public map may sit either " +
       "side of the trigger. The category alone cannot tell you whether an area is closed."
@@ -1070,7 +1084,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
       var done = (run.trace || []).filter(function (x) {
         return x.tag.indexOf("sonar:COMPLETE") === 0;
       })[0];
-      var span = done ? Math.max(400, (done.at - r.at) * 1000 / speed) : 1200;
+      var span = done ? Math.max(400, (done.at - r.at) * 1000 / replaySpeed) : 1200;
       sweepWave(span);
     }
 
@@ -1135,6 +1149,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
       if (typeof t === "function") { t(); } else { clearTimeout(t); }
     });
     timers = [];
+    replaySpeed = speed;
     text($("advisory"), "");
     $("trace").innerHTML = "";
     $("verdict").hidden = true;
@@ -1168,7 +1183,9 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     // Caption is owned by the sites fetch and renderSites; the image load
     // handler only covers the failure branch now.
     img.addEventListener("error", function () {
-      // Terminal branch. Do not leave a broken image icon on a judged surface.
+      // Terminal branch. Do not leave a broken image icon on a judged surface,
+      // and stop every later caption writer from contradicting this one.
+      sourceImageFailed = true;
       img.hidden = true;
       text($("source-caption"), "Source image unavailable on this instance.");
     });
@@ -1211,6 +1228,8 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     p.textContent = "No recorded run is available on this instance. Nothing is shown rather than showing something invented.";
     $("citations").appendChild(p);
     setStatus("idle", "no recording");
+    text($("chip-mode"), "no recording");
+    $("trace").textContent = "No recorded run is available, so there is nothing to replay.";
     $("btn-play").disabled = true;
     $("btn-speed").disabled = true;
   });

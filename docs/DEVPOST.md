@@ -50,7 +50,9 @@ ground truth established **before** the agent existed.
 `docs/GROUND_TRUTH.md` was written first by reading the PDF with PyMuPDF.
 Then `scripts/verify_citation.py` looks up every quote the model produced as an
 exact substring of the page it cited. A paraphrase fails. Both quotes matched
-exactly, on p.70 and p.359. That result is on the console before you scroll.
+exactly, on p.70. (The p.359 passage above was surfaced in the agent's
+explanation; the two machine-verified citations are both p.70.) That result is
+on the console before you scroll.
 
 **Acoustic, verified by differential control.** A single sample cannot
 distinguish a model reading a waveform from a model answering the prompt, so
@@ -76,7 +78,7 @@ NASA satellite capture produced different `image_kind` and legend sizes.
 `core/synthesis.py` is pure: no model, no network, no IO. It computes the
 verdict from published numeric bands, so **swapping the model cannot change the
 conclusion.** The agents supply observations; the decision is readable Python
-with 12 tests on it, including one that fails loudly if a future FWC rescale
+with 17 tests on it, including one that fails loudly if a future FWC rescale
 moves the trigger out of the "very low" band.
 
 Four ADK `LlmAgent`s driven by `InMemoryRunner`:
@@ -145,7 +147,7 @@ All US Government public domain, and reproducible with `scripts/fetch_data.ps1`.
 Gemini 3.5 Flash, Google Agent Development Kit, Google Cloud Run, FastAPI,
 Pydantic, PyMuPDF.
 
-**117 tests plus 22 route assertions.** Zero external requests on the console:
+**118 tests plus 22 route assertions.** Zero external requests on the console:
 no CDN, no webfont, no icon library.
 
 ## Honest limits, stated rather than discovered

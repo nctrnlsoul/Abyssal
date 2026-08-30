@@ -96,9 +96,9 @@ Pause on the ruler for a full two seconds. It is the thing they will remember.
 
 **SHOT: the NOAA map panel, the agent's labeled markers drawn on the real frame.**
 
-> "This is the exact frame the imagery agent read, and the markers are the
-> agent's own reading drawn directly on it. Four sites, each labeled with what
-> the agent saw, so you can check every one against the map underneath."
+> "This is the exact frame the imagery agent read, with the four sample
+> clusters marked and labeled with their map categories, so you can check
+> every marker against the map underneath."
 
 > "And the verdict itself is not written by a model. The agents observe; a pure
 > deterministic layer decides, from published numeric bands. Swapping the model
@@ -129,7 +129,7 @@ Cut in this order. Never cut the first two.
 2. Cut the map-overlay paragraph at 3:00 first.
 3. Then the differential control detail at 1:40, keeping "computed from the
    actual clip".
-4. Then the security sentence at 3:30, keeping "one hundred eleven tests".
+4. Then the security sentence at 3:30, keeping "over a hundred tests".
 
 ## Do not say
 

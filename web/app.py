@@ -218,6 +218,10 @@ async def guard(request: Request, call_next):
         # was the one path with no protection on it.
         return _json({"error": "request could not be completed"}, 500)
     response.headers.update(_HEADERS)
+    if "cache-control" not in response.headers:
+        # A redeploy must not serve yesterday's console out of heuristic
+        # browser cache. Routes that want caching set their own header.
+        response.headers["Cache-Control"] = "no-cache"
     return response
 
 

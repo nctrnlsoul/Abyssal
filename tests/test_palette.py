@@ -446,3 +446,18 @@ def test_site_overlay_is_fed_by_the_api_and_labelled_approximate():
     d = TestClient(app).get("/api/sites").json()
     assert len(d["sites"]) == 4
     assert "approximate" in d["positioning"]
+
+
+def test_hidden_attribute_actually_hides_and_failed_image_silences_captions():
+    """The image error branch sets img.hidden, but an author display:block
+    beats the UA [hidden] rule, so the page must carry its own [hidden] rule.
+    And once the image has failed, no later caption writer may contradict the
+    failure caption."""
+    if not HTML.exists():
+        pytest.skip("console not built yet")
+    t = HTML.read_text(encoding="utf-8")
+    assert "[hidden] { display: none !important; }" in t
+    assert "sourceImageFailed = true" in t
+    assert "if (sourceImageFailed) { return; }" in t, "captionAwaiting must no-op after image failure"
+    assert 'if (sourceImageFailed) { layer.innerHTML = ""; return; }' in t, (
+        "renderSites must clear markers and stop after image failure")

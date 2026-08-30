@@ -105,8 +105,8 @@ def synthesise(*, map_category: str, cell_threshold_in_federal_doc: bool,
         headline = (f"The public map reads '{v.category}', which cannot establish "
                     f"whether this area is closed to harvest.")
     elif v.relation == "ABOVE":
-        headline = (f"The public map reads '{v.category}', every value of which is "
-                    f"at or above Florida's {FL_CLOSURE_TRIGGER_CELLS_PER_L:,} "
+        headline = (f"The public map reads '{v.category}'. Every value in that "
+                    f"band is at or above Florida's {FL_CLOSURE_TRIGGER_CELLS_PER_L:,} "
                     f"cells/L closure trigger.")
     elif v.relation == "BELOW":
         headline = (f"The public map reads '{v.category}', entirely below Florida's "
@@ -115,9 +115,10 @@ def synthesise(*, map_category: str, cell_threshold_in_federal_doc: bool,
         headline = f"Unrecognized map category '{v.category}'. No verdict."
 
     reconciliation = (
-        "Cell counts trigger TESTING. Toxin in meat triggers CLOSURE. "
-        f"Florida's {FL_CLOSURE_TRIGGER_CELLS_PER_L:,} cells/L figure is a state "
-        "operational trigger, not a federal action level: it appears nowhere in "
+        "In the federal rulebook, cell counts trigger TESTING and toxin in "
+        "the meat triggers CLOSURE. "
+        f"Florida's {FL_CLOSURE_TRIGGER_CELLS_PER_L:,} cells/L closure line is "
+        "the state's own rule, not a federal action level: it appears nowhere in "
         f"the NSSP Guide. The federal criterion is {federal_criterion}, measured "
         f"in {federal_matrix}."
     )

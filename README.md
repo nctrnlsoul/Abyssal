@@ -15,7 +15,7 @@ This section exists because the honest version of it is the whole point.
 |---|---|
 | Hydrophone acoustic analysis | **Real.** NOAA/Navy SanctSound site FK04, Florida Keys National Marine Sanctuary. Real Gemini audio input |
 | Bloom imagery analysis | **Real.** NOAA NCCOS HAB Operational Forecast and NASA MODIS. Real Gemini vision |
-| Regulatory analysis | **Real.** The FDA NSSP Guide for the Control of Molluscan Shellfish, 2023 Revision, ~520 pages, 297,921 tokens. Real Gemini long context |
+| Regulatory analysis | **Real.** The FDA NSSP Guide for the Control of Molluscan Shellfish, 2023 Revision, 532 pages, 297,921 tokens. Real Gemini long context |
 | Report and map generation | **Real.** Gemini function calling |
 | The incident scenario | A selected case study over real archived data, not a live sensor feed. Stated plainly rather than implied otherwise |
 
@@ -33,7 +33,7 @@ FDA removed cell counts from the Model Ordinance threshold criteria. 5,000 cells
 triggers **mandatory shellfish toxicity testing**, with the closure action level
 expressed as brevetoxin in shellfish meat, not as a cell count.
 
-Reading that correctly requires the actual 520-page ordinance. That is the job.
+Reading that correctly requires the actual 532-page ordinance. That is the job.
 
 ## Data attribution
 
@@ -65,7 +65,7 @@ py -3 -m venv .venv
 .\scripts\serve.ps1 -Port 8080
 
 # 4. the tests
-.\scripts\run_tests.ps1      # 117 tests
+.\scripts\run_tests.ps1      # 118 tests
 .\scripts\smoke_web.ps1      # 22 route assertions
 ```
 
