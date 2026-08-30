@@ -79,18 +79,23 @@ def test_page_declares_reduced_motion_handling():
     assert "REDUCED" in t, "no scripted reduced-motion branch for the streaming trace"
 
 
-def test_page_sanitizes_before_injecting_generated_svg():
-    """A render boundary that trusts its input is the defect the previous
-    project shipped. Assert the scrubber exists and that innerHTML is never
-    handed model-adjacent markup."""
+def test_page_injects_no_generated_markup_at_all():
+    """The schematic display was removed: the reading overlaid on the ACTUAL
+    NOAA frame supersedes it, and two spatial pictures of the same four sites
+    read as clutter. With it went the whole sanitizer, because the strongest
+    render boundary is the one that does not exist. Assert the removal held:
+    no payload markup reaches innerHTML anywhere, and the dead sanitizer did
+    not linger as reassuring-looking unused code."""
     if not HTML.exists():
         pytest.skip("console not built yet")
     t = HTML.read_text(encoding="utf-8")
-    assert "safeSvg" in t
-    assert "DOMParser" in t
-    assert "importNode" in t
-    assert 'innerHTML = markup' not in t
+    assert "safeSvg" not in t, "dead sanitizer left in the page"
     assert '.innerHTML = map.svg' not in t
+    assert "artifact-svg" not in t, "schematic display crept back"
+    import re
+    writes = re.findall(r"\.innerHTML\s*=\s*([^;]+);", t)
+    for rhs in writes:
+        assert rhs.strip() in ('""', "''"), f"innerHTML assigned non-empty: {rhs.strip()[:60]}"
 
 
 # --- the waveform is real data, so it gets asserted like data ----------------
@@ -361,15 +366,15 @@ def test_wide_layout_defines_three_columns():
         assert f'class="{col}"' in t, f"{col} missing from markup"
 
 
-def test_generated_pane_has_a_terminal_empty_state():
-    """Every stateful screen has a terminal branch. The evidence column shows
-    on load with the real source frame; the generated side must SAY it is
-    waiting rather than sit as an unexplained dark box."""
+def test_map_overlay_has_an_awaiting_state():
+    """Every stateful screen has a terminal branch. Before the first replay the
+    map shows with a caption that SAYS the markers arrive with the replay,
+    rather than sitting as an unexplained plain image."""
     if not HTML.exists():
         pytest.skip("console not built yet")
     t = HTML.read_text(encoding="utf-8")
-    assert "pane-empty" in t
-    assert "Awaiting replay" in t
+    assert "Press REPLAY VERIFIED" in t
+    assert "renderSites(false)" in t, "replay restart does not clear the markers"
 
 
 def test_hydrophone_band_is_full_width_below_the_columns():

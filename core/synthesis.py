@@ -22,7 +22,7 @@ FWC_BANDS: dict[str, tuple[int, int | None]] = {
     "high":        (1_000_000, None),
 }
 
-# Florida operational trigger for shellfish harvesting closure, cells per litre.
+# Florida operational trigger for shellfish harvesting closure, cells per liter.
 # FWC: closures "when cell abundance equals or exceeds 5,000 cells/L".
 # This is a STATE trigger. It is not in the federal NSSP Guide: "5,000 cells"
 # appears zero times across all 532 pages. Proven in docs/GROUND_TRUTH.md.
@@ -112,7 +112,7 @@ def synthesise(*, map_category: str, cell_threshold_in_federal_doc: bool,
         headline = (f"The public map reads '{v.category}', entirely below Florida's "
                     f"{FL_CLOSURE_TRIGGER_CELLS_PER_L:,} cells/L closure trigger.")
     else:
-        headline = f"Unrecognised map category '{v.category}'. No verdict."
+        headline = f"Unrecognized map category '{v.category}'. No verdict."
 
     reconciliation = (
         "Cell counts trigger TESTING. Toxin in meat triggers CLOSURE. "
@@ -124,8 +124,8 @@ def synthesise(*, map_category: str, cell_threshold_in_federal_doc: bool,
 
     caveats = list(extra_caveats or [])
     caveats.append(
-        "A category on a public map is not a measurement. No cells-per-litre "
-        "figure is derived from map colour anywhere in this system."
+        "A category on a public map is not a measurement. No cells-per-liter "
+        "figure is derived from map color anywhere in this system."
     )
     if cell_threshold_in_federal_doc:
         caveats.append(

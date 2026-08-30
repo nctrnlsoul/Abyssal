@@ -1,34 +1,30 @@
-Reading overlaid on the real NOAA frame; packet anchored to dot centers
+Apply subagent verification pass: 4 must-fixes, wording honesty, CSS sweep
 
-TWO DEFECTS REPORTED FROM THE LIVE PAGE, both real:
+- Fix ReferenceError on the /api/run failure path (fail() was deleted with
+  the tool pane); status reads "no recording" and controls disable
+- Remove orphan </div> and vestigial #artifact-note that mis-nested the
+  advisory, hydrophone band and footer
+- Palette: new well #04070A and accent-well #1295A2 tokens; .trace-t was
+  4.09:1 on the well, now 5.62:1; five new pinned contrast pairs; all
+  hardcoded #04070A converted to var(--well)
+- Americanize API-served strings (Unrecognized, cells-per-liter, map color)
+  in synthesis.py and the recorded transcript; new test covers synthesise()
+  output on both branches plus the recorded JSON
+- Waveform: peak_at_seconds is bucket-center (16.0s, was bucket-start
+  15.9s); labels read "peak ~16.0s" and "(ROUGHLY UNDER 500 HZ)" since the
+  16-tap filter's -3dB corner is 443.7 Hz
+- Header sub: "the live NOAA map" -> "NOAA's public red tide map"
+- Close replay-during-sweep rAF race with a generation counter; reset also
+  clears the pending sweep timer and playhead
+- Map caption returns to the awaiting text when markers clear on replay
+- Hide the empty advisory box pre-replay (.advisory:empty)
+- HEAD / returns text/html; btn-speed swaps aria-pressed for data-active;
+  visually hidden marker summary for screen readers; dead CSS swept
+  (.panes, .node block, nodePulse, drawCoast, .boot, .marktext,
+  .artifact svg, .status-line .dot)
+- Claims tests caught prose drift: 111 -> 117 total, decision layer 17;
+  DEMO_SCRIPT 3:00 rewritten for the map overlay; "Ninety tests" written
+  as a word evaded the digit regex, now durable "Over a hundred tests"
 
-1. The travelling packet floated below every node dot. Cause: it targeted
-   offsetTop + offsetHeight/2, the middle of the whole ROW, while the dot
-   sits near the row's top. Both the packet and the spine fill now measure
-   the .tl-dot rect itself, so the anchor is the dot center by construction.
-   Verified to the decimal on the served page: packet center 7.5, 266.3
-   against a dot center of 7.5, 266.3.
-
-   Debugging note worth keeping: the first probe showed the packet 139px off
-   AFTER the fix, which looked like a worse bug. It was the probe: CSS
-   transitions do not advance in a tab that never paints, so the frozen
-   mid-transition value read as a misposition. Bypassing the transition for
-   one frame showed the true landing spot. Same non-painting-tab family as
-   the rAF sweep and the screenshot stalls.
-
-2. The dual-pane evidence images rendered small, and two small frames side
-   by side said less than one big one. MERGED: the actual NOAA frame now
-   renders at full column width with the imagery agent's reading overlaid
-   as markers ON it. Pulsing amber rings on the two [low] sites, gray dots
-   on [not present], labeled chips that flip near the right edge, appearing
-   when the imagery stage completes during the replay.
-
-   Positions live in core/sites.py, measured by eye off the visible sample
-   clusters of the committed frame, and BOTH the payload and the on-page
-   caption say "approximate positions" in as many words. An eyeballed
-   overlay that says it is eyeballed beats a precise-looking schematic that
-   corresponds to nothing. A test pins core/sites.py and the schematic
-   renderer's table together so the two readings can never drift, and the
-   tool artifact stays on the page below the advisory, smaller.
-
-111 tests pass.
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011fGKoidDHjqXRCPhCZYNEG

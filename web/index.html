@@ -14,6 +14,8 @@
       --heading: #E8EEF5;
       --accent: #38D6E0;
       --accent-ink: #0E7C88;
+      --accent-well: #1295A2;
+      --well: #04070A;
       --state-ok: #3ED598;
       --state-bad: #FF5E64;
       --state-warn: #F2BB4F;
@@ -23,11 +25,11 @@
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 }
 
-* { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: #1A2430 #04070A; }
+* { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--rule) var(--well); }
 /* WebKit scrollbars, themed to the field. The bright native track down the
    trace console was the one element still wearing the OS theme. */
 ::-webkit-scrollbar { width: 7px; height: 7px; }
-::-webkit-scrollbar-track { background: #04070A; }
+::-webkit-scrollbar-track { background: var(--well); }
 ::-webkit-scrollbar-thumb { background: #1A2430; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #2a3a4c; }
 html { color-scheme: dark; }
@@ -126,7 +128,6 @@ blockquote { margin: 0; font-family: var(--mono); font-size: .82rem;
   .wrap { max-width: 1560px; }
   .cols { grid-template-columns: 280px minmax(0, 1.1fr) minmax(0, 0.95fr); }
   .col-c { grid-column: auto; }
-  .panes { grid-template-columns: 1fr; }
 }
 /* A grid track is min-width:auto by default, so one long unbreakable mono line
    in the trace pushed the column past the viewport and the panel ran off the
@@ -180,12 +181,6 @@ body { overflow-x: hidden; }
 }
 .tl-packet.on { opacity: 1; }
 
-/* ---------- coastline draws itself on the generated map ---------- */
-.artifact svg path[stroke="#5b7d8c"] {
-  stroke-dasharray: 300; stroke-dashoffset: 300;
-  animation: drawCoast 1.4s ease-out .15s forwards;
-}
-@keyframes drawCoast { to { stroke-dashoffset: 0; } }
 
 /* ---------- citations arrive ---------- */
 .cite { animation: citeIn .45s ease-out both; }
@@ -198,13 +193,7 @@ body { overflow-x: hidden; }
   text-transform: uppercase; color: var(--text-muted);
   display: inline-flex; align-items: center; gap: var(--s2);
 }
-.status-line .dot {
-  width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted);
-  flex: 0 0 auto;
-}
 .status-line[data-state="running"] { color: var(--state-warn); }
-.status-line[data-state="running"] .dot { background: var(--state-warn);
-  animation: statusPulse 1s ease-in-out infinite; }
 .status-line[data-state="done"] { color: var(--state-ok); }
 .status-line[data-state="done"] .dot { background: var(--state-ok); }
 @keyframes statusPulse { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
@@ -262,7 +251,7 @@ body { overflow-x: hidden; }
 @keyframes markIn { from { opacity: 0; transform: translate(-50%,-50%) scale(.4); }
                     to   { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
 .site-dot { display: block; width: 11px; height: 11px; border-radius: 50%;
-  border: 2px solid #04070A; box-shadow: 0 0 8px rgba(0,0,0,.6); }
+  border: 2px solid var(--well); box-shadow: 0 0 8px rgba(0,0,0,.6); }
 .site-mark.cat-low .site-dot { background: #eab308; box-shadow: 0 0 10px rgba(234,179,8,.8); }
 .site-mark.cat-none .site-dot { background: #6b7280; }
 .site-ring { position: absolute; left: 50%; top: 50%; width: 11px; height: 11px;
@@ -278,54 +267,27 @@ body { overflow-x: hidden; }
   background: rgba(4,7,10,.85); border: 1px solid var(--rule);
   padding: 1px 6px; border-radius: 2px; }
 .site-mark.flip .site-label { left: auto; right: 14px; }
-.tool-pane { margin-top: var(--s3); }
-.tool-pane #artifact-svg { max-width: 380px; }
 
 /* ---------- dual pane: what the agent read, next to what it made ---------- */
-.panes { display: grid; grid-template-columns: 1fr; gap: var(--s3); }
-@media (min-width: 760px) { .panes { grid-template-columns: 1fr 1fr; } }
 .pane > h3 {
   font-size: .64rem; letter-spacing: .12em; text-transform: uppercase;
   color: var(--text-muted); margin: 0 0 var(--s2); font-weight: 600;
 }
 .pane img, .pane svg { width: 100%; height: auto; display: block;
   border: 1px solid var(--rule); border-radius: 3px; background: #0b1220; }
-/* Tactical dot field framing the generated map. Pure CSS gradient, no asset. */
-#artifact-svg { padding: 8px; border-radius: 3px;
-  background: radial-gradient(rgba(56,214,224,.10) 1px, transparent 1px);
-  background-size: 13px 13px; border: 1px solid var(--rule); }
-#artifact-svg:empty { min-height: 120px; }
-.pane-empty { font-family: var(--mono); font-size: .7rem; color: var(--text-muted);
-  padding: var(--s4); text-align: center; }
 .pane figcaption { font-size: .68rem; color: var(--text-muted); margin-top: var(--s2); }
 
 /* ---------- agent fleet ---------- */
-.node { display: flex; align-items: center; justify-content: space-between;
-        gap: var(--s2); padding: 10px 12px; border: 1px solid var(--rule);
-        border-radius: 3px; margin-bottom: var(--s2); font-size: .8rem;
-        min-height: 44px; }
-.node[data-state="RUNNING"] { border-color: var(--state-warn); }
-.node[data-state="COMPLETE"] { border-color: var(--state-ok); }
-.node-name { color: var(--text); }
-.node-name .fn { font-family: var(--mono); font-size: .68rem; color: var(--text-muted);
-                 display: block; }
-.node-state { font-family: var(--mono); font-size: .68rem; font-weight: 700;
-              letter-spacing: .06em; color: var(--text-muted); white-space: nowrap; }
-.node[data-state="RUNNING"] .node-state { color: var(--state-warn); }
-.node[data-state="COMPLETE"] .node-state { color: var(--state-ok); }
 /* meaning is never carried by color alone */
-.node-state::before { content: "\00b7 "; }
-.node[data-state="RUNNING"] .node-state::before { content: "\25b8 "; }
-.node[data-state="COMPLETE"] .node-state::before { content: "\2713 "; }
 
 /* ---------- trace ---------- */
 .trace {
-  background: #04070A; border: 1px solid var(--rule); border-radius: 3px;
+  background: var(--well); border: 1px solid var(--rule); border-radius: 3px;
   font-family: var(--mono); font-size: .76rem; line-height: 1.7;
   padding: var(--s3); height: 340px; overflow-y: auto;
 }
 .trace-row { display: flex; gap: var(--s3); }
-.trace-t { color: var(--accent-ink); flex: 0 0 auto; }
+.trace-t { color: var(--accent-well); flex: 0 0 auto; }
 .trace-tag { color: var(--text-muted); flex: 0 0 11ch; }
 .trace-msg { color: var(--text); min-width: 0; overflow-wrap: anywhere; }
 .trace .empty { overflow-wrap: anywhere; }
@@ -364,7 +326,7 @@ button:hover { border-color: var(--accent); color: var(--heading); }
   box-shadow: 0 0 16px rgba(56,214,224,.22), inset 0 0 16px rgba(56,214,224,.06);
 }
 #btn-play:hover { background: rgba(56,214,224,.10); color: var(--accent); }
-button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+button[data-active="true"] { border-color: var(--accent); color: var(--accent); }
 
 footer { margin-top: var(--s6); padding-top: var(--s3); border-top: 1px solid var(--rule);
          font-size: .74rem; color: var(--text-muted); }
@@ -406,8 +368,6 @@ footer a { color: var(--text-muted); }
 .wrap { position: relative; z-index: 1; }
 
 /* ---------- boot sequence ---------- */
-.boot { opacity: 0; transform: translateY(8px); animation: bootIn .55s ease-out forwards; }
-.boot:nth-of-type(1) { animation-delay: .05s; }
 @keyframes bootIn { to { opacity: 1; transform: none; } }
 header { animation: bootIn .5s ease-out both; }
 .evidence { animation: bootIn .5s ease-out .12s both; }
@@ -416,7 +376,7 @@ header { animation: bootIn .5s ease-out both; }
 
 /* ---------- waveform ---------- */
 .wave-band { margin-top: var(--s4); }
-.wave-wrap { position: relative; background: #04070A; border: 1px solid var(--rule);
+.wave-wrap { position: relative; background: var(--well); border: 1px solid var(--rule);
              border-radius: 3px; padding: var(--s2) 0 0; }
 .wave { width: 100%; height: 170px; display: block; }
 .wave .bar { fill: var(--accent-ink); transition: fill .16s linear; }
@@ -428,7 +388,6 @@ header { animation: bootIn .5s ease-out both; }
 .wave .lane { fill: var(--text-muted); font-family: var(--mono); font-size: 10px;
               letter-spacing: .06em; }
 .wave .mark { stroke: var(--accent); stroke-width: .7; stroke-dasharray: 2 2; }
-.wave .marktext { fill: var(--accent); font-family: var(--mono); font-size: 9px; }
 .playhead {
   position: absolute; top: 0; bottom: 0; width: 2px; background: var(--accent);
   box-shadow: 0 0 16px rgba(56,214,224,.85); opacity: 0; left: 0;
@@ -445,16 +404,6 @@ header { animation: bootIn .5s ease-out both; }
              margin-top: var(--s2); flex-wrap: wrap; }
 .wave-note { font-size: .68rem; color: var(--text-muted); margin: var(--s2) 0 0; }
 
-/* ---------- sonar ping on the generated map ---------- */
-@keyframes ping {
-  0%   { transform: scale(1);   opacity: .85; }
-  70%  { transform: scale(4.2); opacity: 0; }
-  100% { transform: scale(4.2); opacity: 0; }
-}
-.artifact svg circle.ping {
-  transform-box: fill-box; transform-origin: center;
-  animation: ping 2.6s cubic-bezier(.22,.61,.36,1) infinite;
-}
 
 /* ---------- ruler trigger draws in ---------- */
 .trigger { transform-origin: top; }
@@ -491,21 +440,13 @@ header { animation: bootIn .5s ease-out both; }
 h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
 .band.straddles { box-shadow: inset 0 0 22px rgba(56,214,224,.10); }
 
-/* ---------- running pulse: cause and effect, not decoration ---------- */
-@keyframes nodePulse {
-  0%, 100% { border-color: var(--state-warn); }
-  50%      { border-color: rgba(242,187,79,.35); }
-}
-.node[data-state="RUNNING"] { animation: nodePulse 1.1s ease-in-out infinite; }
 
 /* ---------- the generated artifact ---------- */
 .artifact { margin-top: var(--s4); }
-.artifact svg { width: 100%; height: auto; display: block;
-                border: 1px solid var(--rule); border-radius: 3px; }
-.artifact-note { font-size: .74rem; color: var(--text-muted); margin: var(--s2) 0 0; }
+.advisory:empty { display: none; }
 .advisory {
   font-family: var(--mono); font-size: .74rem; color: var(--text);
-  white-space: pre-wrap; background: #04070A; border: 1px solid var(--rule);
+  white-space: pre-wrap; background: var(--well); border: 1px solid var(--rule);
   border-radius: 3px; padding: var(--s3); margin-top: var(--s3);
   max-height: 260px; overflow-y: auto;
 }
@@ -516,16 +457,13 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
      stay (they do not move), the pulse stops, and the trace stops streaming
      character by character and simply appears. */
   * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
-  .node[data-state="RUNNING"] { animation: none; border-color: var(--state-warn); }
   .deep { animation: none; }
   .ring .seg-a, .ring .seg-b, .ring .core { animation: none !important; }
   .ring .tick-mark { stroke-dashoffset: 0; animation: none; }
   .tl-packet { transition: none; opacity: 0 !important; }
-  .artifact svg path[stroke="#5b7d8c"] { stroke-dashoffset: 0; animation: none; }
   .site-mark { animation: none; }
   .site-mark.cat-low .site-ring { animation: none; opacity: .5; }
-  .artifact svg circle.ping { animation: none; opacity: 0; }
-  .playhead { transition: none; }
+    .playhead { transition: none; }
   /* Everything still ARRIVES, it just does not travel. bootIn/rowIn/land keep
      their opacity endpoints because animation-duration above collapses them
      to instant rather than removing the forwards fill. */
@@ -545,22 +483,24 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
       <span class="chip rec" id="chip-mode">recorded run</span>
     </div>
     <p class="sub">
-      Four agents over real public data: a NOAA hydrophone recording from the Florida Keys,
-      NOAA and NASA bloom imagery, and the 532-page FDA shellfish ordinance.
-      It reports where the public red tide map and the closure regulation disagree.
+      Florida's public red tide map shows five simple colors. The law that closes
+      shellfish beds uses hard numbers. Four AI agents read the real data behind
+      both, an underwater recording from the Florida Keys, NOAA's public red tide map, and
+      the government's own 532-page shellfish rulebook, and show where the map and
+      the law disagree.
     </p>
   </header>
 
   <!-- FIRST FIVE SECONDS: evidence, not a headline -->
   <section class="evidence" aria-labelledby="ev-h">
-    <h2 id="ev-h">Citations checked against the source document, not taken on trust</h2>
+    <h2 id="ev-h">Quotes pulled from the rulebook and checked word for word</h2>
     <div id="citations"><p class="empty">Loading the recorded transcript.</p></div>
     <p class="cite-meta" id="verify-meta"></p>
   </section>
 
   <!-- SIGNATURE ELEMENT -->
   <section class="ruler-block" aria-labelledby="ru-h">
-    <h2 id="ru-h">Published map categories against the closure trigger</h2>
+    <h2 id="ru-h">The map's color bands against the line that closes an area</h2>
     <div class="ruler" id="ruler">
       <div class="bands" id="bands"></div>
     </div>
@@ -632,7 +572,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
         </div>
         <div class="controls">
           <button id="btn-play" type="button">Replay verified run</button>
-          <button id="btn-speed" type="button" aria-pressed="true">Speed 8x</button>
+          <button id="btn-speed" type="button" data-active="true">Speed 8x</button>
         </div>
         <div class="trace" id="trace" role="log" aria-live="polite" aria-relevant="additions">
           <p class="empty">Press Replay run. Timings below are the real elapsed
@@ -647,37 +587,32 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
         <p id="v-why"></p>
         <p id="v-recon"></p>
         <dl class="facts">
-          <dt>Federal criterion</dt><dd id="v-crit"></dd>
+          <dt>What federal law requires</dt><dd id="v-crit"></dd>
           <dt>Measured in</dt><dd id="v-matrix"></dd>
-          <dt>Cell threshold in the ordinance</dt><dd id="v-cellthr"></dd>
-          <dt>Tool calls made</dt><dd id="v-tools"></dd>
+          <dt>Cell-count limit in the rulebook</dt><dd id="v-cellthr"></dd>
+          <dt>Tools the report agent called</dt><dd id="v-tools"></dd>
         </dl>
       </div>
     </div>
 
     <div class="col-c">
       <section class="panel artifact" id="artifact-panel" aria-labelledby="ar-h" hidden>
-        <h2 id="ar-h">What the agent read, and what it produced</h2>
+        <h2 id="ar-h">What the agents found</h2>
         <figure class="pane" style="margin:0">
-          <h3>The frame the imagery agent read, with its reading overlaid</h3>
+          <h3>The real NOAA map, with what the agent found drawn on it</h3>
           <div class="map-wrap">
             <img id="source-image" alt="NOAA NCCOS harmful algal bloom operational forecast for Florida, showing Karenia brevis sample categories" src="api/source-image">
             <div class="site-layer" id="site-layer" aria-hidden="true"></div>
           </div>
           <figcaption id="source-caption"></figcaption>
         </figure>
-        <div class="pane tool-pane">
-          <h3>Tool artifact, render_incident_map</h3>
-          <div id="artifact-svg"></div>
-          <p class="artifact-note" id="artifact-note"></p>
-        </div>
         <div class="advisory" id="advisory"></div>
       </section>
     </div>
   </div>
 
   <section class="panel wave-band" aria-labelledby="wv-h">
-        <h2 id="wv-h">Hydrophone, 60 s window</h2>
+        <h2 id="wv-h">Hydrophone (underwater microphone), 60 seconds</h2>
         <div class="wave-wrap">
           <svg class="wave" id="wave" viewBox="0 0 320 150"
                role="img" aria-label="Peak amplitude envelope of the analyzed recording, with a separate low frequency band"></svg>
@@ -691,16 +626,17 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
       </section>
 
   <footer>
-    <p><strong>This console replays a recorded real run.</strong> A live run makes real
-    Gemini calls, reads a 532-page document and costs about $0.42. This URL is
-    unauthenticated, so it is keyless by design and cannot spend money. The live path is
-    <code>agents/pipeline.py</code> and <code>scripts/record_run.py</code> in the repo, and
-    it produced the transcript shown here.</p>
-    <p>Source data is US Government public domain: NOAA and U.S. Navy SanctSound
-    (doi 10.25921/saca-sp25), NOAA NCCOS HAB Operational Forecast, NASA MODIS,
-    FDA and ISSC NSSP Guide 2023 Revision, and Florida FWC red tide status data.
-    Not an official determination. Harvesting area status is set by the Florida
-    Department of Agriculture and Consumer Services, Division of Aquaculture.</p>
+    <p><strong>This page replays a real run, recorded exactly as it happened.</strong>
+    A live run makes real Gemini calls, reads the full 532-page rulebook, and costs
+    about $0.42. This public page holds no API key, so nobody can make it spend
+    money. The code that ran it live is in the repo at <code>agents/pipeline.py</code>,
+    and it produced everything shown here.</p>
+    <p>All source data is US Government public domain: NOAA and U.S. Navy SanctSound
+    (doi 10.25921/saca-sp25), the NOAA harmful algal bloom forecast, NASA MODIS, the
+    FDA and ISSC shellfish rulebook (NSSP Guide, 2023 Revision), and Florida FWC red
+    tide status data. This is a demonstration, not an official determination.
+    Shellfish area status is set by the Florida Department of Agriculture and
+    Consumer Services, Division of Aquaculture.</p>
   </footer>
 </div>
 
@@ -714,52 +650,6 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
 
   var REDUCED = window.matchMedia &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  // The SVG is produced by agents/tools.py render_incident_map, which escapes
-  // its inputs. It is still parsed and scrubbed rather than assigned through
-  // innerHTML: the previous project shipped an innerHTML render boundary and
-  // had to fix it, and "our own code generated it" is exactly the assumption
-  // that stops being true one refactor later. Cost of the check is a few lines.
-  function safeSvg(markup) {
-    var doc = new DOMParser().parseFromString(markup, "image/svg+xml");
-    var root = doc.documentElement;
-    if (!root || root.nodeName.toLowerCase() !== "svg") { return null; }
-    if (doc.getElementsByTagName("parsererror").length) { return null; }
-    // Namespace check, not pedantry. Markup missing xmlns parses "successfully"
-    // into the null namespace and then renders as flowing text rather than a
-    // graphic, which is a silent visual failure. Reject it so the fallback
-    // message fires instead.
-    if (root.namespaceURI !== "http://www.w3.org/2000/svg") { return null; }
-    var walk = doc.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, null);
-    var drop = [];
-    var node = root;
-    do {
-      var tag = node.nodeName.toLowerCase();
-      if (tag === "script" || tag === "foreignobject" || tag === "use" ||
-          tag === "image" || tag === "a") {
-        drop.push(node);
-        continue;
-      }
-      Array.prototype.slice.call(node.attributes || []).forEach(function (a) {
-        var n = a.name.toLowerCase();
-        if (n.indexOf("on") === 0 || n === "href" || n === "xlink:href" ||
-            n === "style") {
-          node.removeAttribute(a.name);
-        }
-      });
-    } while ((node = walk.nextNode()));
-    drop.forEach(function (n) { if (n.parentNode) { n.parentNode.removeChild(n); } });
-    return document.importNode(root, true);
-  }
-
-  function fail(msg) {
-    var t = $("trace");
-    t.innerHTML = "";
-    var p = document.createElement("p");
-    p.className = "err";
-    p.textContent = msg;
-    t.appendChild(p);
-  }
 
   // ---- waveform. real envelope of the clip the acoustic agent read ----------
   var waveBars = [], lowBars = [], waveSeconds = 0;
@@ -801,7 +691,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     }
 
     label(4, 12, "FULL BAND", "lane");
-    label(W - 4, 12, "peak " + (d.peak_at_seconds || 0).toFixed(1) + "s", "lane", "end");
+    label(W - 4, 12, "peak ~" + (d.peak_at_seconds || 0).toFixed(1) + "s", "lane", "end");
 
     // Mirrored about the center line, which is how every audio tool draws this
     // and reads as a waveform rather than as a bar chart.
@@ -833,7 +723,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
 
     // Low band, own lane, own scale, and it says so on the chart.
     label(4, LOW_BASE - LOW_H - 5,
-          "LOW BAND UNDER " + (d.low_band_corner_hz || 500) + " HZ, SCALED INDEPENDENTLY",
+          "LOW BAND (ROUGHLY UNDER " + (d.low_band_corner_hz || 500) + " HZ), SCALED INDEPENDENTLY",
           "lane");
     lowBars = low.map(function (p, i) {
       var h = Math.max(0.6, p * LOW_H);
@@ -851,16 +741,18 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
 
     var share = d.low_band_share_of_peak;
     text($("wave-note"),
-      "Top trace is the full band peak envelope. The lower lane is the same "
-      + "audio low pass filtered near " + (d.low_band_corner_hz || 500)
-      + " Hz, where a vessel engine sits and snapping shrimp do not. It is drawn "
-      + "to its own scale because it only reaches "
+      "The blue trace is the loudness of the actual recording, moment by moment. "
+      + "The amber lane is the same audio with only the deep rumble kept, roughly below "
+      + (d.low_band_corner_hz || 500) + " Hz, which is where a boat engine shows "
+      + "up and snapping shrimp do not. The rumble is drawn on its own scale "
+      + "because it is only "
       + (share != null ? (share * 100).toFixed(1) + "%" : "a small fraction")
-      + " of the full band peak on this clip, so do not compare heights between "
-      + "lanes.");
+      + " as strong as the full recording, so compare shapes between the lanes, "
+      + "not heights.");
   }
 
   var sweepDone = null;
+  var sweepGen = 0;
 
   function finishSweep() {
     // Terminal state, reachable without a single animation frame.
@@ -875,6 +767,8 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
   function sweepWave(ms) {
     var head = $("playhead"), wrap = head.parentNode;
     if (!waveBars.length) { return; }
+    sweepGen += 1;
+    var gen = sweepGen;
     waveBars.forEach(function (b) { b.classList.remove("lit"); });
     lowBars.forEach(function (b) { b.classList.remove("lit"); });
 
@@ -885,6 +779,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     var width = wrap.getBoundingClientRect().width;
 
     function step(now) {
+      if (gen !== sweepGen) { return; }
       var f = Math.min(1, (now - t0) / ms);
       head.style.transform = "translateX(" + (f * width).toFixed(1) + "px)";
       text($("playhead-time"), (f * waveSeconds).toFixed(1) + "s");
@@ -940,11 +835,21 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
   // ---- the reading, overlaid on the frame it was read from ------------------
   var siteData = null;
 
+  function captionAwaiting() {
+    text($("source-caption"),
+      "NOAA NCCOS HAB Operational Forecast, the exact frame the imagery agent "
+      + "read. Press REPLAY VERIFIED RUN and the agent's reading is overlaid "
+      + "when the imagery stage completes.");
+  }
+
   function renderSites(show) {
     var layer = $("site-layer");
     if (!layer) { return; }
     layer.innerHTML = "";
-    if (!show || !siteData) { return; }
+    if (!show || !siteData) {
+      if (siteData) { captionAwaiting(); }
+      return;
+    }
     (siteData.sites || []).forEach(function (site, i) {
       var m = document.createElement("div");
       m.className = "site-mark " +
@@ -970,6 +875,13 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
       "NOAA NCCOS HAB Operational Forecast, the exact frame the imagery agent "
       + "read. Markers are the agent's reading: " + (siteData.positioning || "")
       + ". Category colors match the map legend; no numeric values are implied.");
+    var srBits = (siteData.sites || []).map(function (s) {
+      return s.name + ": " + s.category;
+    }).join("; ");
+    var sr = document.createElement("span");
+    sr.className = "sr";
+    sr.textContent = " Marker readings: " + srBits + ".";
+    $("source-caption").appendChild(sr);
   }
 
   // ---- the signature element -----------------------------------------------
@@ -1123,6 +1035,10 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     pk.classList.remove("on");
     pk.style.transform = "";
     renderSites(false);
+    sweepGen += 1;
+    if (sweepDone) { clearTimeout(sweepDone); sweepDone = null; }
+    $("playhead").classList.remove("on");
+    $("playhead").style.transform = "";
   }
 
   function addRow(r) {
@@ -1203,43 +1119,14 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
   }
 
   function showArtifacts(d) {
-    var art = (d.artifacts || {});
-    var host = $("artifact-svg");
-    host.innerHTML = "";
-    var map = art.render_incident_map;
-    if (map && map.svg) {
-      var node = safeSvg(map.svg);
-      if (node) {
-        host.appendChild(node);
-        // Ping rings on the sites that are actually above the trigger. Only
-        // those: pinging a "not present" site would be decoration asserting
-        // something the data does not say.
-        var NS = "http://www.w3.org/2000/svg";
-        Array.prototype.slice.call(node.querySelectorAll("circle")).forEach(function (c, i) {
-          var fill = (c.getAttribute("fill") || "").toLowerCase();
-          if (fill !== "#eab308" && fill !== "#f97316" && fill !== "#ef4444") { return; }
-          var ring = document.createElementNS(NS, "circle");
-          ring.setAttribute("cx", c.getAttribute("cx"));
-          ring.setAttribute("cy", c.getAttribute("cy"));
-          ring.setAttribute("r", c.getAttribute("r"));
-          ring.setAttribute("fill", "none");
-          ring.setAttribute("stroke", fill);
-          ring.setAttribute("stroke-width", "0.8");
-          ring.setAttribute("class", "ping");
-          ring.style.animationDelay = (i * 0.45) + "s";
-          c.parentNode.insertBefore(ring, c);
-        });
-        text($("artifact-note"),
-          "Drawn by the render_incident_map tool call during stage 4, from the " +
-          (map.sites_rendered || 0) + " monitoring sites read off the NOAA map. " +
-          "Schematic site diagram, not georeferenced, and no cell counts are implied.");
-      } else {
-        text($("artifact-note"), "The generated diagram did not parse as SVG, so it is not shown.");
-      }
-    }
-    var adv = art.write_advisory;
+    // The advisory text is the write_advisory tool call's real output. The
+    // schematic the render_incident_map call draws stays in the recorded
+    // payload and the trace proves the call ran; it is no longer displayed
+    // because the reading overlaid on the ACTUAL NOAA frame says the same
+    // thing better, and two spatial pictures of the same four sites read as
+    // clutter, not evidence.
+    var adv = (d.artifacts || {}).write_advisory;
     text($("advisory"), adv && adv.advisory ? adv.advisory : "");
-    $("artifact-panel").hidden = false;
   }
 
   function replay() {
@@ -1248,16 +1135,6 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
       if (typeof t === "function") { t(); } else { clearTimeout(t); }
     });
     timers = [];
-    // Clear the generated side back to its empty state; keep the panel and the
-    // source frame visible. Hiding the whole panel left a void in the third
-    // column, and the source image does not stop being real between replays.
-    $("artifact-svg").innerHTML = "";
-    var ph = document.createElement("p");
-    ph.className = "pane-empty";
-    ph.textContent = "Awaiting replay. The diagram is generated by the "
-                   + "render_incident_map tool call during stage 4.";
-    $("artifact-svg").appendChild(ph);
-    text($("artifact-note"), "");
     text($("advisory"), "");
     $("trace").innerHTML = "";
     $("verdict").hidden = true;
@@ -1276,7 +1153,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
   $("btn-speed").addEventListener("click", function () {
     speed = speed === 8 ? 1 : 8;
     this.textContent = "Speed " + speed + "x";
-    this.setAttribute("aria-pressed", speed === 8 ? "true" : "false");
+    this.setAttribute("data-active", speed === 8 ? "true" : "false");
   });
 
   fetch("api/bands").then(function (r) {
@@ -1302,10 +1179,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     return r.json();
   }).then(function (d) {
     siteData = d;
-    text($("source-caption"),
-      "NOAA NCCOS HAB Operational Forecast, the exact frame the imagery agent "
-      + "read. Press REPLAY VERIFIED RUN and the agent's reading is overlaid "
-      + "when the imagery stage completes.");
+    captionAwaiting();
   }).catch(function () {
     text($("source-caption"), "Site data unavailable; the frame is shown without markers.");
   });
@@ -1324,16 +1198,8 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
   }).then(function (d) {
     run = d;
     drawCitations(d);
-    // Show the evidence column immediately. The source frame is real on load;
-    // only the generated artifact waits for a replay, and it says so.
-    var host = $("artifact-svg");
-    if (!host.firstChild) {
-      var ph = document.createElement("p");
-      ph.className = "pane-empty";
-      ph.textContent = "Awaiting replay. The diagram is generated by the "
-                     + "render_incident_map tool call during stage 4.";
-      host.appendChild(ph);
-    }
+    // Show the evidence column immediately: the NOAA frame is real on load,
+    // and the caption says the markers arrive with the replay.
     $("artifact-panel").hidden = false;
     text($("chip-model"), d.model || "gemini-3.5-flash");
     text($("chip-mode"), "recorded " + (d.recorded_utc || "") + " · " +
@@ -1344,7 +1210,9 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     p.className = "err";
     p.textContent = "No recorded run is available on this instance. Nothing is shown rather than showing something invented.";
     $("citations").appendChild(p);
-    fail("Transcript unavailable.");
+    setStatus("idle", "no recording");
+    $("btn-play").disabled = true;
+    $("btn-speed").disabled = true;
   });
 })();
 </script>

@@ -135,3 +135,21 @@ def test_trigger_position_is_the_log_interpolated_value():
     and the line would sit visibly in the wrong place."""
     from core.synthesis import trigger_position_pct
     assert trigger_position_pct() == pytest.approx(33.98, abs=0.02)
+
+def test_served_strings_use_american_english():
+    """The page-level American-English test cannot see strings that arrive
+    through the API at runtime; a reviewer caught 'cells-per-litre' surviving
+    there. Cover the decision layer's own words on both branches, and the
+    recorded transcript the public instance actually serves."""
+    from pathlib import Path
+    a = synthesise(map_category="low", cell_threshold_in_federal_doc=False)
+    b = synthesise(map_category="charted-wrong", cell_threshold_in_federal_doc=False)
+    blob = " ".join(
+        [a.headline, a.reconciliation, b.headline, b.reconciliation]
+        + list(a.caveats) + list(b.caveats)
+    ).lower()
+    rec = (Path(__file__).resolve().parent.parent / "docs" / "recorded-run.json"
+           ).read_text(encoding="utf-8").lower()
+    for brit in ("colour", "litre", "unrecognised"):
+        assert brit not in blob, f"British spelling {brit!r} in served advisory text"
+        assert brit not in rec, f"British spelling {brit!r} in the recorded transcript"

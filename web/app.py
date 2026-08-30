@@ -221,7 +221,7 @@ async def guard(request: Request, call_next):
     return response
 
 
-@app.head("/")
+@app.head("/", response_class=HTMLResponse)
 @app.get("/", response_class=HTMLResponse)
 def index() -> str:
     return _PAGE

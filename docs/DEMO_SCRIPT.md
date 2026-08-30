@@ -52,10 +52,10 @@ Pause on the ruler for a full two seconds. It is the thing they will remember.
 
 **SHOT: the hydrophone panel while the playhead sweeps.**
 
-**SHOT: point the cursor at the spike above "peak 15.9s" while saying this.**
+**SHOT: point the cursor at the spike above "peak ~16.0s" while saying this.**
 
 > "This isn't an animation. It's the actual loudness of the actual ocean
-> recording our agent listened to, and that spike is a real event at 15.9
+> recording our agent listened to, and that spike is a real event at 16.0
 > seconds into the clip."
 
 > "Three hundred and twenty measurements computed from the file with Python's
@@ -94,10 +94,11 @@ Pause on the ruler for a full two seconds. It is the thing they will remember.
 
 ## 3:00 to 3:30  Why the conclusion is trustworthy
 
-**SHOT: the dual pane, source NOAA frame beside the generated diagram.**
+**SHOT: the NOAA map panel, the agent's labeled markers drawn on the real frame.**
 
-> "On the left is the exact frame the imagery agent read. On the right is what
-> it produced. You can check the reading against the source."
+> "This is the exact frame the imagery agent read, and the markers are the
+> agent's own reading drawn directly on it. Four sites, each labeled with what
+> the agent saw, so you can check every one against the map underneath."
 
 > "And the verdict itself is not written by a model. The agents observe; a pure
 > deterministic layer decides, from published numeric bands. Swapping the model
@@ -109,7 +110,7 @@ Pause on the ruler for a full two seconds. It is the thing they will remember.
 
 > "It is deployed on Cloud Run with a service account that holds no roles, a
 > hard instance cap, and no API key on the service at all, so the public console
-> cannot spend money. Ninety tests. Every source file is public domain
+> cannot spend money. Over a hundred tests. Every source file is public domain
 > and reproducible from the repo."
 
 > "Abyssal does not tell you there is a crisis. It tells you the map and the law
@@ -125,7 +126,7 @@ Cut in this order. Never cut the first two.
    "isn't an animation" line at 1:15. Those three carry the whole credibility
    argument, and the waveform line is the one that separates this entry from
    every dashboard with random pulsing bars.
-2. Cut the dual pane paragraph at 3:00 first.
+2. Cut the map-overlay paragraph at 3:00 first.
 3. Then the differential control detail at 1:40, keeping "computed from the
    actual clip".
 4. Then the security sentence at 3:30, keeping "one hundred eleven tests".

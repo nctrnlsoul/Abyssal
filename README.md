@@ -65,7 +65,7 @@ py -3 -m venv .venv
 .\scripts\serve.ps1 -Port 8080
 
 # 4. the tests
-.\scripts\run_tests.ps1      # 111 tests
+.\scripts\run_tests.ps1      # 117 tests
 .\scripts\smoke_web.ps1      # 22 route assertions
 ```
 
@@ -118,7 +118,7 @@ Full working in `docs/GROUND_TRUTH.md`, which was written by reading the PDF
 | Regulatory | 5/5 graded checks, **2/2 citations verified as exact substrings of the cited page** |
 | Imagery | 7/7 graded checks, plus a differential against a second image |
 | Acoustic | Differential control: two windows, same reef in both, vessel engine in one only |
-| Decision | Pure Python, no model, 16 tests including the band boundaries |
+| Decision | Pure Python, no model, 17 tests including the band boundaries |
 
 ## Notes for reviewers
 

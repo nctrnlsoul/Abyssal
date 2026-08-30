@@ -172,7 +172,7 @@
     "cell_threshold_in_federal_doc": false,
     "reconciliation": "Cell counts trigger TESTING. Toxin in meat triggers CLOSURE. Florida's 5,000 cells/L figure is a state operational trigger, not a federal action level: it appears nowhere in the NSSP Guide. The federal criterion is 20 MU/100 grams (0.8 mg brevetoxin-2 equivalents/kg), measured in shellfish meats.",
     "caveats": [
-      "A category on a public map is not a measurement. No cells-per-litre figure is derived from map colour anywhere in this system."
+      "A category on a public map is not a measurement. No cells-per-liter figure is derived from map color anywhere in this system."
     ]
   },
   "tool_calls": [

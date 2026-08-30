@@ -10,6 +10,7 @@ from __future__ import annotations
 ABYSS_900 = "#070B10"   # page field
 ABYSS_800 = "#0E141B"   # cards
 ABYSS_700 = "#1A2430"   # hairlines, rules
+ABYSS_950 = "#04070A"   # recessed wells: transcript, hydrophone, scrollbar track
 SLATE_300 = "#CBD5E1"   # body text
 SLATE_400 = "#94A3B8"   # muted text
 SLATE_100 = "#E8EEF5"   # headings
@@ -19,6 +20,7 @@ SLATE_100 = "#E8EEF5"   # headings
 # sonar readouts, and spent in exactly ONE place, the band ruler.
 SONAR_400 = "#38D6E0"
 SONAR_600 = "#0E7C88"   # accent on a LIGHT chip, where the bright one fails
+SONAR_500 = "#1295A2"   # accent ink on the dark wells, where 600 reads too dim
 
 # Approved dark-field verdict triple. Valid on ABYSS_900 only.
 # Never paste these onto a light field: measured 1.88, 2.98 and 1.75 on white.
@@ -36,6 +38,8 @@ SEMANTIC = {
     "heading": SLATE_100,
     "accent": SONAR_400,
     "accent-ink": SONAR_600,
+    "accent-well": SONAR_500,
+    "well": ABYSS_950,
     "state-ok": OK_400,
     "state-bad": BAD_400,
     "state-warn": WARN_400,
@@ -52,6 +56,11 @@ CONTRAST_REQUIREMENTS = [
     ("text-muted",  "surface", 4.5),
     ("accent",      "field",   3.0),
     ("accent",      "surface", 3.0),
+    ("accent",      "well",    3.0),
+    ("accent-ink",  "well",    3.0),
+    ("accent-well", "well",    4.5),
+    ("text",        "well",    4.5),
+    ("text-muted",  "well",    4.5),
     ("state-ok",    "field",   4.5),
     ("state-bad",   "field",   4.5),
     ("state-warn",  "field",   4.5),

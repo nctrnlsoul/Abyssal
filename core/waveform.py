@@ -119,8 +119,8 @@ def envelope(path: str, buckets: int = 320) -> dict:
         "rate": rate,
         "normalized_to_clip_peak": True,
         "peak_bucket": loudest,
-        "peak_at_seconds": round(loudest / max(1, len(peaks_n)) * seconds, 1),
+        "peak_at_seconds": round((loudest + 0.5) / max(1, len(peaks_n)) * seconds, 1),  # bucket center
         "low_peak_bucket": low_peak,
-        "low_peak_at_seconds": round(low_peak / max(1, len(low_n)) * seconds, 1),
+        "low_peak_at_seconds": round((low_peak + 0.5) / max(1, len(low_n)) * seconds, 1),  # bucket center
         "low_band_corner_hz": round(rate / (2 * low_win)),
     }
