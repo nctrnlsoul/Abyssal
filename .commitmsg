@@ -1,39 +1,25 @@
-Apply read-only assessment findings: honesty, layman copy, edge-case bugs
+Plain-language pass 2: packed sub, named rulebook, amber band highlight
 
-Honesty:
-- DEVPOST: the two machine-verified citations are both p.70; the p.359
-  passage was surfaced in the agent's explanation - the claim now says so.
-  Decision-layer test count 12 -> 17, total 117 -> 118
-- Map attribution de-overclaimed: markers locate the visible sample
-  clusters and their map categories; "the agent's reading" wording removed
-  from heading, captions, sr summary, sites.py comment and the demo script
-- README 520 -> 532 pages (twice); demo script stale cut-note fixed
-
-Bugs:
-- Page carries its own [hidden] { display:none !important } - the image
-  error branch never actually hid the image (author display:block beat the
-  UA rule)
-- sourceImageFailed flag makes the failure caption terminal: caption
-  writers no-op and renderSites clears the marker layer
-- finishSweep clears its backup timer and bumps sweepGen - closes the
-  orphaned-timer path via visibilitychange and the backwards playhead jump
-- Sweep span uses replaySpeed captured at replay start, not the live
-  toggle; renderSites(true) skips when markers already rendered (no
-  double entrance animation); /api/run failure path fixes chip and
-  placeholder; middleware defaults Cache-Control: no-cache
-
-Layman copy (from the judge-persona review):
-- Plain-terms gloss for the MU/NSP unit wall under the verified quotes
-- "5,000 red tide algae cells per liter of seawater" anchors the unit
-- Headline split into two sentences; reconciliation reworded to separate
-  Florida's own closure line from the federal rulebook's testing/closure
-  distinction; "plane idle" -> "standing by"
-- Recorded trace lines deliberately untouched: rewording the recording
-  would break record/replay honesty
-
-recorded-run.json assessment fields updated to match synthesis.py, then
-artifacts regenerated via the deterministic renderers. New pinned test for
-the [hidden] rule and failure-caption guards. 118 tests, 22 smoke checks.
+- Header sub cut to three short sentences; the page below already shows the
+  sources, so the enumeration is gone
+- Quotes section names its source plainly before any quote appears ("The
+  rulebook: the FDA's Guide for the Control of Molluscan Shellfish, 2023
+  edition, 532 pages") and the verify line drops "exact substrings" for
+  "found word for word on the page they cite. A paraphrase would fail."
+- The straddled band is now statically highlighted in warn amber with a
+  border and an in-band label, "the closure line lands in this band".
+  Amber, not red: the page measures nothing in real time, so red would
+  claim danger it cannot support; amber marks ambiguity, which is the
+  actual finding
+- Hydrophone made concrete and plain: "One underwater microphone (a
+  hydrophone), 60 seconds of ocean"; lanes relabeled "EVERYTHING THE
+  MICROPHONE HEARD" and "DEEP RUMBLE ONLY, WHERE ENGINES SHOW UP"; the
+  note now opens with the station: one microphone, FK04, Florida Keys
+  sanctuary
+- Demo script removed from the public repo (gitignored): it is stage
+  direction and a do-not-say list, backstage material, not project
+  documentation. Claims tests keep covering the local copy; every asserted
+  string also lives in README or DEVPOST, so a fresh clone stays green
 
 Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_011fGKoidDHjqXRCPhCZYNEG

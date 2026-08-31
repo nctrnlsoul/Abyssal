@@ -39,3 +39,14 @@ venv/
 .DS_Store
 Thumbs.db
 *.log
+
+# Presentation working material, deliberately NOT published. The demo script is
+# stage direction: cursor moves, where to pause, and an explicit "do not say"
+# list. That list exists to stop ME overclaiming on camera, but sitting in a
+# public repo it reads like coaching to manage the audience. The repo should
+# hold the project, not the performance. Kept locally so tests/test_claims.py
+# still checks its numbers against the code; every DOCS loop there guards on
+# exists(), and every asserted string also appears in README or DEVPOST, so a
+# fresh clone runs the full suite green without it.
+docs/DEMO_SCRIPT.md
+docs/DEMO_SCRIPT.backup.md

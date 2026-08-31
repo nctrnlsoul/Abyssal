@@ -95,9 +95,11 @@ blockquote { margin: 0; font-family: var(--mono); font-size: .82rem;
         border-right: 1px solid var(--rule); font-size: .7rem; color: var(--text-muted);
         text-align: center; padding: 0 var(--s1); }
 .band:last-child { border-right: 0; }
-.band.straddles { background: rgba(56,214,224,.09); color: var(--heading); }
+.band.straddles { background: rgba(242,187,79,.10); color: var(--heading); }
 .band-range { display: block; font-family: var(--mono); font-size: .62rem;
               color: var(--text-muted); margin-top: 2px; }
+.band-tag { display: block; font-family: var(--mono); font-size: .6rem;
+            color: var(--state-warn); margin-top: 3px; }
 .trigger { position: absolute; top: -10px; bottom: -8px; width: 2px;
            background: var(--accent); }
 .trigger::before {
@@ -439,7 +441,7 @@ header { animation: bootIn .5s ease-out both; }
 .trigger { box-shadow: 0 0 12px rgba(56,214,224,.55); }
 .trigger-label { text-shadow: 0 0 10px rgba(56,214,224,.45); }
 h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
-.band.straddles { box-shadow: inset 0 0 22px rgba(56,214,224,.10); }
+.band.straddles { box-shadow: inset 0 0 22px rgba(242,187,79,.12), inset 0 0 0 1px rgba(242,187,79,.5); }
 
 
 /* ---------- the generated artifact ---------- */
@@ -484,17 +486,16 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
       <span class="chip rec" id="chip-mode">recorded run</span>
     </div>
     <p class="sub">
-      Florida's public red tide map shows five simple colors. The law that closes
-      shellfish beds uses hard numbers. Four AI agents read the real data behind
-      both, an underwater recording from the Florida Keys, NOAA's public red tide map, and
-      the government's own 532-page shellfish rulebook, and show where the map and
-      the law disagree.
+      Florida's red tide map shows colors. The law that closes shellfish beds
+      uses a number. Four AI agents read the real data behind both and show
+      where the map and the law disagree.
     </p>
   </header>
 
   <!-- FIRST FIVE SECONDS: evidence, not a headline -->
   <section class="evidence" aria-labelledby="ev-h">
     <h2 id="ev-h">Quotes pulled from the rulebook and checked word for word</h2>
+    <p class="cite-meta">The rulebook: the FDA's Guide for the Control of Molluscan Shellfish, 2023 edition, 532 pages. It is the federal rulebook for shellfish safety.</p>
     <div id="citations"><p class="empty">Loading the recorded transcript.</p></div>
     <p class="cite-meta" id="verify-meta"></p>
     <p class="cite-meta">In plain terms: the legal limit is for the toxin in the shellfish meat itself. "MU" (mouse units) is a laboratory dose measure, and NSP is the shellfish poisoning that red tide causes.</p>
@@ -614,7 +615,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
   </div>
 
   <section class="panel wave-band" aria-labelledby="wv-h">
-        <h2 id="wv-h">Hydrophone (underwater microphone), 60 seconds</h2>
+        <h2 id="wv-h">One underwater microphone (a hydrophone), 60 seconds of ocean</h2>
         <div class="wave-wrap">
           <svg class="wave" id="wave" viewBox="0 0 320 150"
                role="img" aria-label="Peak amplitude envelope of the analyzed recording, with a separate low frequency band"></svg>
@@ -692,7 +693,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
       return t;
     }
 
-    label(4, 12, "FULL BAND", "lane");
+    label(4, 12, "EVERYTHING THE MICROPHONE HEARD", "lane");
     label(W - 4, 12, "peak ~" + (d.peak_at_seconds || 0).toFixed(1) + "s", "lane", "end");
 
     // Mirrored about the center line, which is how every audio tool draws this
@@ -725,7 +726,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
 
     // Low band, own lane, own scale, and it says so on the chart.
     label(4, LOW_BASE - LOW_H - 5,
-          "LOW BAND (ROUGHLY UNDER " + (d.low_band_corner_hz || 500) + " HZ), SCALED INDEPENDENTLY",
+          "DEEP RUMBLE ONLY, WHERE ENGINES SHOW UP (DRAWN ON ITS OWN SCALE)",
           "lane");
     lowBars = low.map(function (p, i) {
       var h = Math.max(0.6, p * LOW_H);
@@ -743,14 +744,17 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
 
     var share = d.low_band_share_of_peak;
     text($("wave-note"),
-      "The blue trace is the loudness of the actual recording, moment by moment. "
-      + "The amber lane is the same audio with only the deep rumble kept, roughly below "
-      + (d.low_band_corner_hz || 500) + " Hz, which is where a boat engine shows "
-      + "up and snapping shrimp do not. The rumble is drawn on its own scale "
-      + "because it is only "
+      "One microphone, one minute. NOAA and the U.S. Navy keep recording "
+      + "stations on the seafloor; this minute comes from station FK04 in the "
+      + "Florida Keys sanctuary. The top lane is everything the microphone "
+      + "heard, moment by moment; tall means loud. The bottom lane is the same "
+      + "minute with only the deep rumble kept, roughly below "
+      + (d.low_band_corner_hz || 500) + " Hz, which is where a boat engine "
+      + "shows up and snapping shrimp do not. It is drawn on its own scale "
+      + "because the rumble is only "
       + (share != null ? (share * 100).toFixed(1) + "%" : "a small fraction")
-      + " as strong as the full recording, so compare shapes between the lanes, "
-      + "not heights.");
+      + " as strong as the whole recording, so compare shapes between the "
+      + "lanes, not heights.");
   }
 
   var sweepDone = null;
@@ -915,6 +919,12 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
         : s.low.toLocaleString() + " to " + s.high.toLocaleString();
       var box = document.createElement("div");
       box.appendChild(name); box.appendChild(rng);
+      if (s.relation === "STRADDLES") {
+        var tag = document.createElement("span");
+        tag.className = "band-tag";
+        tag.textContent = "the closure line lands in this band";
+        box.appendChild(tag);
+      }
       d.appendChild(box);
       bands.appendChild(d);
     });
@@ -976,8 +986,8 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     var v = d.verification;
     if (v) {
       text($("verify-meta"),
-        v.passed + " of " + v.checked + " quotes located as exact substrings of the cited " +
-        "page in " + v.source_document + ", " + v.source_pages + " pages. Method: " + v.method + ".");
+        v.passed + " of " + v.checked + " quotes found word for word on the page they cite, " +
+        "checked automatically against the rulebook PDF. A paraphrase would fail.");
     }
   }
 
