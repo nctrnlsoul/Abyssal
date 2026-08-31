@@ -1,25 +1,29 @@
-Plain-language pass 2: packed sub, named rulebook, amber band highlight
+Show the map's reading on the ruler; unify trigger color; fold the duplicate advisory
 
-- Header sub cut to three short sentences; the page below already shows the
-  sources, so the enumeration is gone
-- Quotes section names its source plainly before any quote appears ("The
-  rulebook: the FDA's Guide for the Control of Molluscan Shellfish, 2023
-  edition, 532 pages") and the verify line drops "exact substrings" for
-  "found word for word on the page they cite. A paraphrase would fail."
-- The straddled band is now statically highlighted in warn amber with a
-  border and an in-band label, "the closure line lands in this band".
-  Amber, not red: the page measures nothing in real time, so red would
-  claim danger it cannot support; amber marks ambiguity, which is the
-  actual finding
-- Hydrophone made concrete and plain: "One underwater microphone (a
-  hydrophone), 60 seconds of ocean"; lanes relabeled "EVERYTHING THE
-  MICROPHONE HEARD" and "DEEP RUMBLE ONLY, WHERE ENGINES SHOW UP"; the
-  note now opens with the station: one microphone, FK04, Florida Keys
-  sanctuary
-- Demo script removed from the public repo (gitignored): it is stage
-  direction and a do-not-say list, backstage material, not project
-  documentation. Claims tests keep covering the local copy; every asserted
-  string also lives in README or DEVPOST, so a fresh clone stays green
+The ruler showed the rule but never the reading, so the highlighted band
+read as "this is what was found" when it is actually "this is where the
+closure line falls". Brian caught it as "where is the measurement?".
 
-Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+- The band the map actually read is now marked in accent teal and labeled
+  "the map read this", set at verdict time alongside the map markers. The
+  two are now visibly different bands: the closure line falls in "very
+  low", the map read "low", one band to its right
+- Deliberately a category and not a number: you cannot get a number off a
+  color, and that gap IS the finding
+- Trigger line, dot and label move from teal to warn amber so the line and
+  the band it lands in read as one idea
+- Band boxes: 46px -> 82px min height, .7rem -> .86rem type, real padding.
+  They were compressing the text to unreadable at judging distance
+- Map caption said "sample cluster" twice (my lead-in duplicated the
+  positioning note from core/sites.py). Rewritten, and it now names the
+  dark blue-gray wash as NOAA's own satellite layer so it does not read as
+  a rendering fault or an edit of ours
+- The advisory pane restated the verdict almost sentence for sentence.
+  Folded into a closed <details> labeled as the report agent's own file,
+  so the tool output stays as evidence without a wall of duplicate text
+
+The source image is untouched. It is the frame the agent read, and editing
+evidence to look nicer is the one thing this project does not do.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_011fGKoidDHjqXRCPhCZYNEG

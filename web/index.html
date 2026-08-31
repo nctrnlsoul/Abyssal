@@ -89,26 +89,29 @@ blockquote { margin: 0; font-family: var(--mono); font-size: .82rem;
   color: var(--text-muted); margin: 0 0 var(--s3); font-weight: 600;
 }
 .ruler { position: relative; margin: var(--s5) 0 var(--s4); }
-.bands { display: flex; height: 46px; border: 1px solid var(--rule); border-radius: 3px;
+.bands { display: flex; min-height: 82px; border: 1px solid var(--rule); border-radius: 3px;
          overflow: hidden; }
 .band { position: relative; display: flex; align-items: center; justify-content: center;
-        border-right: 1px solid var(--rule); font-size: .7rem; color: var(--text-muted);
-        text-align: center; padding: 0 var(--s1); }
+        border-right: 1px solid var(--rule); font-size: .86rem; color: var(--text-muted);
+        text-align: center; padding: var(--s3) var(--s2); line-height: 1.35; }
 .band:last-child { border-right: 0; }
 .band.straddles { background: rgba(242,187,79,.10); color: var(--heading); }
-.band-range { display: block; font-family: var(--mono); font-size: .62rem;
-              color: var(--text-muted); margin-top: 2px; }
-.band-tag { display: block; font-family: var(--mono); font-size: .6rem;
-            color: var(--state-warn); margin-top: 3px; }
+.band-range { display: block; font-family: var(--mono); font-size: .74rem;
+              color: var(--text-muted); margin-top: 4px; }
+.band-tag { display: block; font-size: .72rem; color: var(--state-warn);
+            margin-top: 6px; font-weight: 600; line-height: 1.25; }
+.band-read { display: block; font-size: .72rem; color: var(--accent);
+             margin-top: 6px; font-weight: 600; line-height: 1.25; }
+.band.wasread { background: rgba(56,214,224,.10); color: var(--heading); }
 .trigger { position: absolute; top: -10px; bottom: -8px; width: 2px;
-           background: var(--accent); }
+           background: var(--state-warn); }
 .trigger::before {
   content: ""; position: absolute; top: -4px; left: -3px; width: 8px; height: 8px;
-  background: var(--accent); border-radius: 50%;
+  background: var(--state-warn); border-radius: 50%;
 }
 .trigger-label {
   position: absolute; top: -34px; transform: translateX(-50%);
-  font-family: var(--mono); font-size: .68rem; color: var(--accent);
+  font-family: var(--mono); font-size: .78rem; color: var(--state-warn);
   white-space: nowrap; font-weight: 600; text-align: center;
 }
 .ruler { padding-top: 12px; }
@@ -439,14 +442,20 @@ header { animation: bootIn .5s ease-out both; }
 
 /* ---------- accent glow, spent only where the accent is ---------- */
 .trigger { box-shadow: 0 0 12px rgba(56,214,224,.55); }
-.trigger-label { text-shadow: 0 0 10px rgba(56,214,224,.45); }
+.trigger-label { text-shadow: 0 0 10px rgba(242,187,79,.45); }
 h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
 .band.straddles { box-shadow: inset 0 0 22px rgba(242,187,79,.12), inset 0 0 0 1px rgba(242,187,79,.5); }
+.band.wasread { box-shadow: inset 0 0 22px rgba(56,214,224,.10), inset 0 0 0 1px rgba(56,214,224,.55); }
 
 
 /* ---------- the generated artifact ---------- */
 .artifact { margin-top: var(--s4); }
 .advisory:empty { display: none; }
+.adv-wrap { margin-top: var(--s3); }
+.adv-wrap > summary { cursor: pointer; font-size: .78rem; color: var(--text-muted);
+                      padding: var(--s2) 0; }
+.adv-wrap > summary:hover { color: var(--accent); }
+.adv-wrap[open] > summary { color: var(--heading); }
 .advisory {
   font-family: var(--mono); font-size: .74rem; color: var(--text);
   white-space: pre-wrap; background: var(--well); border: 1px solid var(--rule);
@@ -609,7 +618,10 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
           </div>
           <figcaption id="source-caption"></figcaption>
         </figure>
-        <div class="advisory" id="advisory"></div>
+        <details class="adv-wrap" id="adv-wrap" hidden>
+          <summary>The advisory file the report agent wrote (same finding, its own words)</summary>
+          <div class="advisory" id="advisory"></div>
+        </details>
       </section>
     </div>
   </div>
@@ -889,10 +901,12 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
       layer.appendChild(m);
     });
     text($("source-caption"),
-      "NOAA's public red tide forecast map (NCCOS HAB Operational Forecast), "
-      + "the exact frame the imagery agent read. Markers locate the visible "
-      + "sample clusters and their map categories: " + (siteData.positioning || "")
-      + ". Category colors match the map legend; no numeric values are implied.");
+      "NOAA's public red tide forecast map, the exact frame the imagery agent "
+      + "read. Each marker is a site with the map's own category for it, "
+      + (siteData.positioning || "") + ". Marker colors match the map legend, "
+      + "and no numeric value is implied by any of them. The dark blue-gray "
+      + "wash over the water is NOAA's satellite layer, part of their map, "
+      + "not an edit of ours.");
     var srBits = (siteData.sites || []).map(function (s) {
       return s.name + ": " + s.category;
     }).join("; ");
@@ -903,12 +917,35 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
   }
 
   // ---- the signature element -----------------------------------------------
+  // The ruler shows the RULE. This marks what the map actually said in this
+  // run, which is the closest thing to a measurement the system has, and it
+  // is deliberately a category and not a number: you cannot get a number off
+  // a color. Without this a viewer reads the highlighted band as the reading,
+  // and the highlighted band is where the TRIGGER falls, a different thing.
+  function markReading(d) {
+    var cat = (d.assessment || {}).map_category;
+    if (!cat) { return; }
+    var bands = $("bands").children;
+    for (var i = 0; i < bands.length; i++) {
+      var el = bands[i];
+      if (el.getAttribute("data-category") !== cat) { continue; }
+      el.classList.add("wasread");
+      if (el.querySelector(".band-read")) { return; }
+      var tag = document.createElement("span");
+      tag.className = "band-read";
+      tag.textContent = "the map read this";
+      el.firstChild.appendChild(tag);
+      return;
+    }
+  }
+
   function drawRuler(data) {
     var bands = $("bands");
     bands.innerHTML = "";
     data.segments.forEach(function (s) {
       var d = document.createElement("div");
       d.className = "band" + (s.relation === "STRADDLES" ? " straddles" : "");
+      d.setAttribute("data-category", s.category);
       d.style.width = s.width_pct + "%";
       var name = document.createElement("span");
       name.textContent = s.category;
@@ -939,6 +976,8 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     lab.style.left = data.trigger_pct + "%";
     lab.textContent = data.trigger_cells_per_l.toLocaleString() + " cells/L closure trigger";
     $("ruler").appendChild(lab);
+
+    if (run) { markReading(run); }
 
     var straddling = data.segments.filter(function (s) { return s.relation === "STRADDLES"; });
     var read = $("ruler-read");
@@ -1134,6 +1173,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     text($("v-tools"), (d.tool_calls || []).join(", ") || "none");
     setStatus("done", "run complete");
     renderSites(true);
+    markReading(d);
     var v = $("verdict");
     v.hidden = false;
     v.classList.remove("land");
@@ -1150,7 +1190,12 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     // thing better, and two spatial pictures of the same four sites read as
     // clutter, not evidence.
     var adv = (d.artifacts || {}).write_advisory;
-    text($("advisory"), adv && adv.advisory ? adv.advisory : "");
+    var body = adv && adv.advisory ? adv.advisory : "";
+    text($("advisory"), body);
+    // Folded shut by default: it restates the verdict above almost sentence for
+    // sentence, which is the point (the agent's prose and the deterministic
+    // verdict agree) but reads as duplicated filler on a judged surface.
+    $("adv-wrap").hidden = !body;
   }
 
   function replay() {
@@ -1161,6 +1206,7 @@ h1 { text-shadow: 0 0 18px rgba(56,214,224,.18); }
     timers = [];
     replaySpeed = speed;
     text($("advisory"), "");
+    $("adv-wrap").hidden = true;
     $("trace").innerHTML = "";
     $("verdict").hidden = true;
     resetNodes();
